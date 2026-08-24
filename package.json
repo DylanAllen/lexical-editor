@@ -1,0 +1,72 @@
+{
+  "name": "react-lexical-editor",
+  "version": "1.0.0",
+  "description": "A rich-text WYSIWYG and Markdown dual-mode editor, formatted renderer, and plaintext extractor for React powered by Lexical",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./styles.css": "./dist/styles.css"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "prepare": "npm run build"
+  },
+  "keywords": [
+    "react",
+    "lexical",
+    "editor",
+    "markdown",
+    "rich-text",
+    "wysiwyg",
+    "lexical-renderer",
+    "plaintext",
+    "react18",
+    "react19",
+    "nextjs",
+    "vite"
+  ],
+  "author": "",
+  "license": "MIT",
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "dependencies": {
+    "@lexical/code": "^0.34.0",
+    "@lexical/link": "^0.34.0",
+    "@lexical/list": "^0.34.0",
+    "@lexical/markdown": "^0.34.0",
+    "@lexical/react": "^0.34.0",
+    "@lexical/rich-text": "^0.34.0",
+    "@lexical/selection": "^0.34.0",
+    "@lexical/utils": "^0.34.0",
+    "@radix-ui/react-dialog": "^1.1.6",
+    "@radix-ui/react-label": "^2.1.2",
+    "@radix-ui/react-slot": "^1.1.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lexical": "^0.34.0",
+    "lucide-react": "^0.475.0 || ^0.500.0 || ^0.536.0",
+    "react-markdown": "^9.0.0 || ^10.0.0",
+    "remark-gfm": "^4.0.0",
+    "tailwind-merge": "^2.5.0 || ^3.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.7.0"
+  }
+}
