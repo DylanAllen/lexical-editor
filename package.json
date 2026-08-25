@@ -1,6 +1,6 @@
 {
   "name": "react-lexical-markdown-editor",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A rich-text WYSIWYG and Markdown dual-mode editor, formatted renderer, and plaintext extractor for React powered by Lexical",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
