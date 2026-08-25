@@ -299,25 +299,6 @@ getPlainTextFromEditorState(editorState, 120, "..."); // string
 
 ---
 
-## Publishing to NPM
-
-1. **Build the package**:
-   ```bash
-   npm run build
-   ```
-
-2. **Login to NPM**:
-   ```bash
-   npm login
-   ```
-
-3. **Publish**:
-   ```bash
-   npm publish --access public
-   ```
-
----
-
 ## License
 
 MIT
