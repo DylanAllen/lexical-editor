@@ -1,6 +1,6 @@
 /* ==========================================================================
    React Lexical Markdown Editor Styles
-   Theme Modes: 'light' | 'dark' | 'unstyled' | 'auto'
+   Theme Modes: 'light' | 'dark' | 'unstyled' | 'auto' | 'system'
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
@@ -41,7 +41,7 @@
   --editor-active: #334155;
 }
 
-/* Browser Preference (prefers-color-scheme: dark when in auto mode) */
+/* Browser Preference (prefers-color-scheme: dark when in auto / system mode) */
 @media (prefers-color-scheme: dark) {
   :root:not(.editor-theme-light):not([data-editor-theme="light"]),
   .editor-theme-auto,
@@ -63,254 +63,254 @@
    2. Container & Base Resets
    -------------------------------------------------------------------------- */
 .editor-container {
-  box-sizing: border-box !important;
-  font-family: inherit !important;
-  position: relative !important;
-  text-align: left !important;
+  box-sizing: border-box;
+  font-family: inherit;
+  position: relative;
+  text-align: left;
 }
 
 .editor-container *,
 .editor-container *::before,
 .editor-container *::after {
-  box-sizing: border-box !important;
+  box-sizing: border-box;
 }
 
 /* Styled Theme (Applied unless .editor-unstyled is set) */
 .editor-container:not(.editor-unstyled) {
-  border: 1px solid var(--editor-border) !important;
-  border-radius: var(--editor-radius) !important;
-  background-color: var(--editor-background) !important;
-  color: var(--editor-foreground) !important;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
-  padding: 0.875rem !important;
+  border: 1px solid var(--editor-border);
+  border-radius: var(--editor-radius);
+  background-color: var(--editor-background);
+  color: var(--editor-foreground);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  padding: 0.875rem;
 }
 
 .editor-container:not(.editor-unstyled).compact {
-  padding: 0.5rem !important;
+  padding: 0.5rem;
 }
 
 .editor-container:not(.editor-unstyled):focus-within {
-  border-color: var(--editor-primary) !important;
-  box-shadow: 0 0 0 1px var(--editor-primary) !important;
+  border-color: var(--editor-primary);
+  box-shadow: 0 0 0 1px var(--editor-primary);
 }
 
 /* --------------------------------------------------------------------------
    3. Scoped Button Reset (Styled mode)
    -------------------------------------------------------------------------- */
 .editor-container:not(.editor-unstyled) button {
-  all: unset !important;
-  box-sizing: border-box !important;
-  display: inline-flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 0.35rem !important;
-  padding: 0 0.5rem !important;
-  height: 1.75rem !important;
-  border-radius: 0.375rem !important;
-  font-family: inherit !important;
-  font-size: 0.75rem !important;
-  font-weight: 500 !important;
-  line-height: 1 !important;
-  color: var(--editor-muted-foreground) !important;
-  background-color: transparent !important;
-  border: 1px solid transparent !important;
-  cursor: pointer !important;
-  user-select: none !important;
-  vertical-align: middle !important;
-  outline: none !important;
-  flex-shrink: 0 !important;
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease !important;
+  box-sizing: border-box;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0 0.5rem;
+  height: 1.75rem;
+  border-radius: 0.375rem;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--editor-muted-foreground);
+  background-color: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  user-select: none;
+  vertical-align: middle;
+  outline: none;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .editor-container:not(.editor-unstyled) button:hover {
-  background-color: var(--editor-muted-hover) !important;
-  color: var(--editor-foreground) !important;
+  background-color: var(--editor-muted-hover);
+  color: var(--editor-foreground);
 }
 
 .editor-container:not(.editor-unstyled) button:disabled {
-  opacity: 0.5 !important;
-  cursor: not-allowed !important;
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .editor-container:not(.editor-unstyled) button.toolbar-item {
-  width: 1.875rem !important;
-  height: 1.875rem !important;
-  padding: 0 !important;
-  border-radius: 0.375rem !important;
-  color: var(--editor-foreground) !important;
+  width: 1.875rem;
+  height: 1.875rem;
+  padding: 0;
+  border-radius: 0.375rem;
+  color: var(--editor-foreground);
 }
 
 .editor-container:not(.editor-unstyled) button.toolbar-item.compact {
-  width: 1.5rem !important;
-  height: 1.5rem !important;
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
 .editor-container:not(.editor-unstyled) button.toolbar-item:hover {
-  background-color: var(--editor-muted-hover) !important;
-  color: var(--editor-foreground) !important;
+  background-color: var(--editor-muted-hover);
+  color: var(--editor-foreground);
 }
 
 .editor-container:not(.editor-unstyled) button.toolbar-item.active {
-  background-color: var(--editor-active) !important;
-  color: var(--editor-foreground) !important;
-  font-weight: 600 !important;
+  background-color: var(--editor-active);
+  color: var(--editor-foreground);
+  font-weight: 600;
 }
 
 .editor-container:not(.editor-unstyled) button.format-btn {
-  background-color: var(--editor-muted) !important;
-  border: 1px solid var(--editor-border) !important;
-  color: var(--editor-foreground) !important;
-  font-weight: 500 !important;
-  padding: 0 0.5rem !important;
+  background-color: var(--editor-muted);
+  border: 1px solid var(--editor-border);
+  color: var(--editor-foreground);
+  font-weight: 500;
+  padding: 0 0.5rem;
 }
 
 .editor-container:not(.editor-unstyled) button.format-btn:hover {
-  background-color: var(--editor-muted-hover) !important;
+  background-color: var(--editor-muted-hover);
 }
 
 .editor-container:not(.editor-unstyled) button.expand-btn {
-  color: var(--editor-muted-foreground) !important;
-  padding: 0 0.5rem !important;
+  color: var(--editor-muted-foreground);
+  padding: 0 0.5rem;
 }
 
 .editor-container:not(.editor-unstyled) button.expand-btn:hover {
-  background-color: var(--editor-muted-hover) !important;
-  color: var(--editor-foreground) !important;
+  background-color: var(--editor-muted-hover);
+  color: var(--editor-foreground);
 }
 
 /* --------------------------------------------------------------------------
    4. Header Bar & Mode Switcher
    -------------------------------------------------------------------------- */
 .editor-header-bar {
-  display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: wrap !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  padding-bottom: 0.625rem !important;
-  margin-bottom: 0.625rem !important;
-  gap: 0.5rem !important;
-  width: 100% !important;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.625rem;
+  margin-bottom: 0.625rem;
+  gap: 0.5rem;
+  width: 100%;
 }
 
 .editor-container:not(.editor-unstyled) .editor-header-bar {
-  border-bottom: 1px solid var(--editor-border) !important;
+  border-bottom: 1px solid var(--editor-border);
 }
 
 .editor-header-left {
-  display: inline-flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  gap: 0.375rem !important;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.375rem;
 }
 
 .editor-header-right {
-  display: inline-flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  gap: 0.375rem !important;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.375rem;
 }
 
 .editor-mode-pill {
-  display: inline-flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  gap: 2px !important;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 2px;
 }
 
 .editor-container:not(.editor-unstyled) .editor-mode-pill {
-  background-color: var(--editor-muted) !important;
-  border: 1px solid var(--editor-border) !important;
-  padding: 2px !important;
-  border-radius: 0.375rem !important;
+  background-color: var(--editor-muted);
+  border: 1px solid var(--editor-border);
+  padding: 2px;
+  border-radius: 0.375rem;
 }
 
 .editor-container:not(.editor-unstyled) .editor-mode-pill button {
-  height: 1.375rem !important;
-  padding: 0 0.5rem !important;
-  font-size: 0.7rem !important;
-  border-radius: 0.25rem !important;
-  color: var(--editor-muted-foreground) !important;
-  background: transparent !important;
-  border: none !important;
-  font-weight: 500 !important;
+  height: 1.375rem;
+  padding: 0 0.5rem;
+  font-size: 0.7rem;
+  border-radius: 0.25rem;
+  color: var(--editor-muted-foreground);
+  background: transparent;
+  border: none;
+  font-weight: 500;
 }
 
 .editor-container:not(.editor-unstyled) .editor-mode-pill button.active {
-  background-color: var(--editor-background) !important;
-  color: var(--editor-foreground) !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08) !important;
-  font-weight: 600 !important;
+  background-color: var(--editor-background);
+  color: var(--editor-foreground);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  font-weight: 600;
 }
 
 /* --------------------------------------------------------------------------
    5. Toolbar Bar
    -------------------------------------------------------------------------- */
 .editor-toolbar {
-  display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: wrap !important;
-  align-items: center !important;
-  gap: 0.25rem !important;
-  padding-bottom: 0.5rem !important;
-  margin-bottom: 0.5rem !important;
-  width: 100% !important;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
+  width: 100%;
 }
 
 .editor-container:not(.editor-unstyled) .editor-toolbar {
-  border-bottom: 1px solid var(--editor-border) !important;
+  border-bottom: 1px solid var(--editor-border);
 }
 
 .editor-divider {
-  width: 1px !important;
-  height: 1.25rem !important;
-  margin: 0 0.25rem !important;
-  flex-shrink: 0 !important;
+  width: 1px;
+  height: 1.25rem;
+  margin: 0 0.25rem;
+  flex-shrink: 0;
 }
 
 .editor-container:not(.editor-unstyled) .editor-divider {
-  background-color: var(--editor-border) !important;
+  background-color: var(--editor-border);
 }
 
 /* --------------------------------------------------------------------------
    6. Input & Content Editable
    -------------------------------------------------------------------------- */
 .editor-body-wrapper {
-  position: relative !important;
-  width: 100% !important;
+  position: relative;
+  width: 100%;
 }
 
 .editor-input {
-  outline: none !important;
+  outline: none;
   min-height: 250px;
-  line-height: 1.65 !important;
+  line-height: 1.65;
   word-break: break-word;
   white-space: pre-wrap;
 }
 
 .editor-container:not(.editor-unstyled) .editor-input {
-  border: 1px solid var(--editor-border) !important;
-  border-radius: 0.375rem !important;
-  padding: 0.75rem 1rem !important;
-  background-color: var(--editor-background) !important;
-  color: var(--editor-foreground) !important;
-  font-size: 0.9375rem !important;
-  box-shadow: none !important;
-  transition: min-height 0.2s ease !important;
+  border: 1px solid var(--editor-border);
+  border-radius: 0.375rem;
+  padding: 0.75rem 1rem;
+  background-color: var(--editor-background);
+  color: var(--editor-foreground);
+  font-size: 0.9375rem;
+  box-shadow: none;
+  transition: min-height 0.2s ease;
 }
 
 .editor-container:not(.editor-unstyled) .editor-input:focus {
-  border-color: var(--editor-primary) !important;
+  border-color: var(--editor-primary);
 }
 
 .editor-container:not(.editor-unstyled) .editor-input.compact {
-  padding: 0.5rem 0.75rem !important;
-  font-size: 0.875rem !important;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
   min-height: 44px;
 }
 
+.editor-input a,
 .editor-container:not(.editor-unstyled) .editor-input a {
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -338,65 +338,73 @@
   font-size: 0.875rem;
 }
 
+/* Readonly / Renderer View */
+.editor-input.editor-readonly {
+  min-height: auto;
+  border: none;
+  padding: 0;
+  background: transparent;
+}
+
 /* --------------------------------------------------------------------------
    7. Markdown Raw Editor & Quick Toolbar
    -------------------------------------------------------------------------- */
 .editor-markdown-section {
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 0.5rem !important;
-  width: 100% !important;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
 }
 
 .editor-markdown-toolbar {
-  display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: wrap !important;
-  gap: 0.25rem !important;
-  align-items: center !important;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  align-items: center;
 }
 
 .editor-container:not(.editor-unstyled) .editor-markdown-toolbar {
-  background-color: var(--editor-muted) !important;
-  padding: 0.25rem 0.5rem !important;
-  border-radius: 0.375rem !important;
-  border: 1px solid var(--editor-border) !important;
+  background-color: var(--editor-muted);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--editor-border);
 }
 
 .editor-markdown-textarea {
-  width: 100% !important;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
-  font-size: 0.875rem !important;
-  line-height: 1.5 !important;
-  outline: none !important;
-  resize: vertical !important;
-  box-sizing: border-box !important;
+  width: 100%;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  outline: none;
+  resize: vertical;
+  box-sizing: border-box;
 }
 
 .editor-container:not(.editor-unstyled) .editor-markdown-textarea {
-  padding: 0.75rem 0.875rem !important;
-  border: 1px solid var(--editor-border) !important;
-  border-radius: 0.375rem !important;
-  background-color: var(--editor-background) !important;
-  color: var(--editor-foreground) !important;
-  transition: border-color 0.15s ease, min-height 0.2s ease !important;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid var(--editor-border);
+  border-radius: 0.375rem;
+  background-color: var(--editor-background);
+  color: var(--editor-foreground);
+  transition: border-color 0.15s ease, min-height 0.2s ease;
 }
 
 .editor-container:not(.editor-unstyled) .editor-markdown-textarea:focus {
-  border-color: var(--editor-primary) !important;
-  box-shadow: 0 0 0 1px var(--editor-primary) !important;
+  border-color: var(--editor-primary);
+  box-shadow: 0 0 0 1px var(--editor-primary);
 }
 
 .editor-markdown-preview {
-  box-sizing: border-box !important;
+  box-sizing: border-box;
 }
 
 .editor-container:not(.editor-unstyled) .editor-markdown-preview {
-  border: 1px solid var(--editor-border) !important;
-  border-radius: 0.375rem !important;
-  padding: 1rem !important;
-  background-color: var(--editor-muted) !important;
-  color: var(--editor-foreground) !important;
+  border: 1px solid var(--editor-border);
+  border-radius: 0.375rem;
+  padding: 1rem;
+  background-color: var(--editor-muted);
+  color: var(--editor-foreground);
 }
 
 /* --------------------------------------------------------------------------
@@ -474,6 +482,20 @@
   margin: 0.5rem 0 0.25rem 0;
 }
 
+.editor-heading-h4 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin: 0.4rem 0 0.2rem 0;
+}
+
+.editor-heading-h5 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.4;
+  margin: 0.35rem 0 0.2rem 0;
+}
+
 .editor-quote {
   margin: 0.5rem 0 0.5rem 0.75rem;
   padding-left: 0.75rem;
@@ -518,90 +540,206 @@
   max-width: 100%;
   height: auto;
   border-radius: 0.375rem;
+  border: 1px solid var(--editor-border);
   display: inline-block;
+  margin: 0.5rem 0;
 }
 
 /* --------------------------------------------------------------------------
-   9. Built-in Dialog Styling
+   9. Formatted Markdown Renderer
+   -------------------------------------------------------------------------- */
+.editor-renderer {
+  color: var(--editor-foreground);
+}
+
+.editor-renderer-markdown {
+  line-height: 1.65;
+}
+
+.editor-renderer-markdown h1 {
+  font-size: 1.625rem;
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 1.25rem 0 0.5rem 0;
+}
+
+.editor-renderer-markdown h2 {
+  font-size: 1.35rem;
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 1rem 0 0.35rem 0;
+}
+
+.editor-renderer-markdown h3 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.35;
+  margin: 0.75rem 0 0.25rem 0;
+}
+
+.editor-renderer-markdown p {
+  margin: 0.5rem 0;
+}
+
+.editor-renderer-markdown ul {
+  list-style-type: disc;
+  margin: 0.5rem 0 0.5rem 1.25rem;
+  padding: 0;
+}
+
+.editor-renderer-markdown ol {
+  list-style-type: decimal;
+  margin: 0.5rem 0 0.5rem 1.25rem;
+  padding: 0;
+}
+
+.editor-renderer-markdown li {
+  margin: 0.25rem 0;
+}
+
+.editor-renderer-markdown blockquote {
+  margin: 0.75rem 0;
+  padding-left: 0.875rem;
+  border-left: 3px solid var(--editor-border);
+  color: var(--editor-muted-foreground);
+  font-style: italic;
+}
+
+.editor-renderer-markdown code {
+  background-color: var(--editor-muted-hover);
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.25rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.875em;
+}
+
+.editor-renderer-markdown pre {
+  background-color: var(--editor-muted-hover);
+  padding: 0.75rem 1rem;
+  border-radius: 0.375rem;
+  overflow-x: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin: 0.75rem 0;
+}
+
+.editor-renderer-markdown pre code {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
+.editor-renderer-markdown hr {
+  border: 0;
+  border-top: 1px solid var(--editor-border);
+  margin: 1.5rem 0;
+}
+
+.editor-renderer-markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+
+.editor-renderer-markdown th,
+.editor-renderer-markdown td {
+  border: 1px solid var(--editor-border);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+
+.editor-renderer-markdown th {
+  background-color: var(--editor-muted);
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+   10. Built-in Dialog Styling
    -------------------------------------------------------------------------- */
 .editor-dialog-overlay {
-  position: fixed !important;
-  inset: 0 !important;
-  z-index: 9999 !important;
-  background-color: rgba(0, 0, 0, 0.55) !important;
-  backdrop-filter: blur(2px) !important;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background-color: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
 }
 
 .editor-dialog-content {
-  position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  z-index: 10000 !important;
-  width: calc(100% - 2rem) !important;
-  max-width: 28rem !important;
-  background-color: var(--editor-background, #ffffff) !important;
-  color: var(--editor-foreground, #0f172a) !important;
-  border: 1px solid var(--editor-border, #e2e8f0) !important;
-  border-radius: 0.625rem !important;
-  padding: 1.5rem !important;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15) !important;
-  box-sizing: border-box !important;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10000;
+  width: calc(100% - 2rem);
+  max-width: 28rem;
+  background-color: var(--editor-background, #ffffff);
+  color: var(--editor-foreground, #0f172a);
+  border: 1px solid var(--editor-border, #e2e8f0);
+  border-radius: 0.625rem;
+  padding: 1.5rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+  box-sizing: border-box;
 }
 
 .editor-dialog-content h2,
 .editor-dialog-content .dialog-title {
-  margin: 0 0 1rem 0 !important;
-  font-size: 1.125rem !important;
-  font-weight: 600 !important;
-  color: var(--editor-foreground, #0f172a) !important;
+  margin: 0 0 1rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--editor-foreground, #0f172a);
 }
 
 .editor-dialog-content label {
-  display: block !important;
-  font-size: 0.8125rem !important;
-  font-weight: 500 !important;
-  color: var(--editor-muted-foreground, #334155) !important;
-  margin-bottom: 0.375rem !important;
-  background: transparent !important;
-  padding: 0 !important;
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--editor-muted-foreground, #334155);
+  margin-bottom: 0.375rem;
+  background: transparent;
+  padding: 0;
 }
 
 .editor-dialog-content input {
-  width: 100% !important;
-  padding: 0.5rem 0.75rem !important;
-  font-size: 0.875rem !important;
-  border: 1px solid var(--editor-border, #cbd5e1) !important;
-  border-radius: 0.375rem !important;
-  background-color: var(--editor-background, #ffffff) !important;
-  color: var(--editor-foreground, #0f172a) !important;
-  outline: none !important;
-  box-sizing: border-box !important;
-  margin-bottom: 1rem !important;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  border: 1px solid var(--editor-border, #cbd5e1);
+  border-radius: 0.375rem;
+  background-color: var(--editor-background, #ffffff);
+  color: var(--editor-foreground, #0f172a);
+  outline: none;
+  box-sizing: border-box;
+  margin-bottom: 1rem;
 }
 
 .editor-dialog-content input:focus {
-  border-color: var(--editor-primary, #2563eb) !important;
-  box-shadow: 0 0 0 1px var(--editor-primary, #2563eb) !important;
+  border-color: var(--editor-primary, #2563eb);
+  box-shadow: 0 0 0 1px var(--editor-primary, #2563eb);
 }
 
 .editor-dialog-footer {
-  display: flex !important;
-  justify-content: flex-end !important;
-  gap: 0.5rem !important;
-  margin-top: 1rem !important;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
 }
 
 .editor-dialog-btn-primary {
-  background-color: var(--editor-primary, #2563eb) !important;
-  color: var(--editor-primary-foreground, #ffffff) !important;
-  padding: 0.5rem 1rem !important;
-  border-radius: 0.375rem !important;
-  font-weight: 600 !important;
-  font-size: 0.875rem !important;
-  height: 2.125rem !important;
+  background-color: var(--editor-primary, #2563eb);
+  color: var(--editor-primary-foreground, #ffffff);
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  height: 2.125rem;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .editor-dialog-btn-primary:hover {
-  background-color: var(--editor-primary-hover, #1d4ed8) !important;
+  background-color: var(--editor-primary-hover, #1d4ed8);
 }

@@ -26,6 +26,9 @@ export function isJsonString(str: string): boolean {
 function extractTextFromLexicalNode(node: any): string {
   if (!node) return "";
   if (typeof node.text === "string") return node.text;
+  if (node.type === "image") {
+    return node.altText ? `[Image: ${node.altText}]` : "[Image]";
+  }
   if (Array.isArray(node.children)) {
     return node.children
       .map(extractTextFromLexicalNode)

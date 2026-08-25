@@ -22,15 +22,15 @@ function onError(error: Error) {
 
 export interface LexicalRendererProps {
   /**
-   * The serialized Lexical JSON string or Markdown string to render.
+   * The serialized Lexical JSON string/object or Markdown string to render.
    */
-  initialState: string;
+  initialState: string | any;
   /**
    * Optional custom CSS class name for the wrapper element.
    */
   className?: string;
   /**
-   * Theme mode: 'light' | 'dark' | 'unstyled' | 'auto' (browser preference)
+   * Theme mode: 'light' | 'dark' | 'unstyled' | 'auto' | 'system'
    * Defaults to 'auto'
    */
   theme?: EditorThemeMode;
@@ -67,7 +67,15 @@ export function LexicalRenderer({
 }: LexicalRendererProps) {
   if (!initialState) return null;
 
-  const activeTheme: EditorThemeMode = theme || "auto";
+  const contentStr =
+    typeof initialState === "object" && initialState !== null
+      ? JSON.stringify(initialState)
+      : String(initialState);
+
+  if (!contentStr.trim()) return null;
+
+  const activeTheme: EditorThemeMode =
+    theme === "system" ? "auto" : theme || "auto";
 
   const themeClassName =
     activeTheme === "light"
@@ -87,10 +95,10 @@ export function LexicalRenderer({
     .join(" ");
 
   // Render Markdown if string is not Lexical JSON
-  if (!isJsonString(initialState)) {
+  if (!isJsonString(contentStr)) {
     return (
       <div className={wrapperClasses} data-editor-theme={activeTheme}>
-        <div className="prose dark:prose-invert max-w-none space-y-4">
+        <div className="editor-renderer-markdown prose dark:prose-invert max-w-none">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={{
@@ -98,7 +106,7 @@ export function LexicalRenderer({
                 <img
                   src={src || ""}
                   alt={alt || ""}
-                  className="rounded-lg border border-gray-200 dark:border-gray-800 shadow-xs my-4 max-w-full h-auto editor-image"
+                  className="editor-image"
                   loading="lazy"
                 />
               ),
@@ -107,14 +115,14 @@ export function LexicalRenderer({
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="editor-link underline font-medium hover:opacity-85 transition-opacity"
+                  className="editor-link"
                 >
                   {children}
                 </a>
               ),
             }}
           >
-            {initialState}
+            {contentStr}
           </ReactMarkdown>
         </div>
       </div>
@@ -126,12 +134,12 @@ export function LexicalRenderer({
   return (
     <div className={wrapperClasses} data-editor-theme={activeTheme}>
       <LexicalComposer
-        key={initialState}
+        key={contentStr}
         initialConfig={{
           namespace: "LexicalRenderer",
           theme: mergedTheme,
           onError,
-          editorState: initialState,
+          editorState: contentStr,
           editable: false,
           nodes: [
             ImageNode,
@@ -145,9 +153,9 @@ export function LexicalRenderer({
           ],
         }}
       >
-        <div className="relative">
+        <div className="editor-body-wrapper">
           <RichTextPlugin
-            contentEditable={<ContentEditable className="outline-none" />}
+            contentEditable={<ContentEditable className="editor-input editor-readonly" />}
             placeholder={null}
             ErrorBoundary={LexicalErrorBoundary}
           />

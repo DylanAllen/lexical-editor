@@ -1,10 +1,21 @@
 import * as React from "react";
-import { useState, useCallback, useEffect } from "react";
+import {
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  useImperativeHandle,
+  forwardRef,
+} from "react";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
+import { ListPlugin } from "@lexical/react/LexicalListPlugin";
+import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
+import { AutoLinkPlugin } from "@lexical/react/LexicalAutoLinkPlugin";
+import { TabIndentationPlugin } from "@lexical/react/LexicalTabIndentationPlugin";
 import {
   $convertFromMarkdownString,
   $convertToMarkdownString,
@@ -27,7 +38,7 @@ import {
 } from "lexical";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { LinkNode, $createLinkNode } from "@lexical/link";
+import { LinkNode, AutoLinkNode, $createLinkNode } from "@lexical/link";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { ListNode, ListItemNode } from "@lexical/list";
 import { CodeNode } from "@lexical/code";
@@ -60,6 +71,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -70,7 +82,28 @@ import { Label } from "./ui/label";
 import LexicalTheme from "../lib/lexical-theme";
 import { isJsonString } from "../lib/utils";
 
-export type EditorThemeMode = "light" | "dark" | "unstyled" | "auto";
+export type EditorThemeMode = "light" | "dark" | "unstyled" | "auto" | "system";
+
+export interface EditorRef {
+  /** Get underlying Lexical editor instance */
+  getEditor: () => LexicalEditor | null;
+  /** Focus the editor */
+  focus: () => void;
+  /** Clear all content */
+  clear: () => void;
+  /** Get current content as Markdown string */
+  getMarkdown: () => string;
+  /** Get current content as serialized Lexical JSON string */
+  getJSON: () => string;
+  /** Check if editor is currently empty */
+  isEmpty: () => boolean;
+  /** Set markdown content */
+  setMarkdown: (markdown: string) => void;
+  /** Set JSON content */
+  setJSON: (jsonString: string) => void;
+}
+
+export type LexicalEditorRef = EditorRef;
 
 export const IMAGE_TRANSFORMER: TextMatchTransformer = {
   dependencies: [ImageNode],
@@ -96,8 +129,75 @@ export const IMAGE_TRANSFORMER: TextMatchTransformer = {
 
 export const CUSTOM_TRANSFORMERS = [IMAGE_TRANSFORMER, ...TRANSFORMERS];
 
+const URL_MATCHER =
+  /((https?:\/\/(www\.)?)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/;
+
+const MATCHERS = [
+  (text: string) => {
+    const match = URL_MATCHER.exec(text);
+    if (match === null) {
+      return null;
+    }
+    const fullMatch = match[0];
+    return {
+      index: match.index,
+      length: fullMatch.length,
+      text: fullMatch,
+      url: fullMatch.startsWith("http") ? fullMatch : `https://${fullMatch}`,
+    };
+  },
+];
+
 function onError(error: Error) {
   console.error("LexicalEditor error:", error);
+}
+
+/**
+ * Normalizes content (string or object) to string.
+ */
+function normalizeContentString(content?: string | any): string {
+  if (!content) return "";
+  if (typeof content === "object") {
+    try {
+      return JSON.stringify(content);
+    } catch {
+      return "";
+    }
+  }
+  return String(content);
+}
+
+/**
+ * Safely parses and applies JSON or Markdown content to a Lexical editor instance.
+ */
+function applyContentToEditor(editor: LexicalEditor, rawContent?: string | any) {
+  const content = normalizeContentString(rawContent);
+  if (!content || !content.trim()) {
+    editor.update(() => {
+      const root = $getRoot();
+      root.clear();
+      const paragraph = $createParagraphNode();
+      root.append(paragraph);
+    });
+    return;
+  }
+
+  if (isJsonString(content)) {
+    try {
+      const parsed = editor.parseEditorState(content);
+      editor.setEditorState(parsed);
+      return;
+    } catch (e) {
+      console.error("Error parsing Lexical JSON state:", e);
+    }
+  }
+
+  // Treat as Markdown / Raw text
+  editor.update(() => {
+    const root = $getRoot();
+    root.clear();
+    $convertFromMarkdownString(content, CUSTOM_TRANSFORMERS);
+  });
 }
 
 function ImageDialog({
@@ -123,6 +223,9 @@ function ImageDialog({
       <DialogContent className="editor-dialog-content">
         <DialogHeader>
           <DialogTitle className="dialog-title">Insert Image</DialogTitle>
+          <DialogDescription className="sr-only">
+            Enter the public URL of the image you want to insert.
+          </DialogDescription>
         </DialogHeader>
         <div style={{ margin: "0.75rem 0" }}>
           <Label htmlFor="imageUrl">Image URL</Label>
@@ -178,6 +281,9 @@ function LinkDialog({
       <DialogContent className="editor-dialog-content">
         <DialogHeader>
           <DialogTitle className="dialog-title">Insert Link</DialogTitle>
+          <DialogDescription className="sr-only">
+            Enter the link URL and optional display text.
+          </DialogDescription>
         </DialogHeader>
         <div style={{ margin: "0.75rem 0" }}>
           <div style={{ marginBottom: "0.75rem" }}>
@@ -337,43 +443,114 @@ function Toolbar({
   );
 }
 
+/**
+ * StateSyncPlugin handles:
+ * 1. Asynchronous / delayed loading of `initialState` (e.g. in Edit Post pages).
+ * 2. External resets or post switches.
+ * 3. Prevention of cursor jumping when the parent reflects onChange back into initialState.
+ */
+function StateSyncPlugin({
+  initialState,
+  onInit,
+  lastContentRef,
+  setMarkdownText,
+}: {
+  initialState?: string | any;
+  onInit?: (editorState: EditorState, isEmpty: boolean, editor: LexicalEditor) => void;
+  lastContentRef: React.MutableRefObject<string | null>;
+  setMarkdownText: React.Dispatch<React.SetStateAction<string>>;
+}) {
+  const [editor] = useLexicalComposerContext();
+  const hasInitializedRef = useRef(false);
+
+  useEffect(() => {
+    const contentStr = normalizeContentString(initialState);
+
+    // Initial mount without content
+    if (!contentStr) {
+      if (!hasInitializedRef.current) {
+        hasInitializedRef.current = true;
+        if (onInit) {
+          const state = editor.getEditorState();
+          state.read(() => {
+            const root = $getRoot();
+            const text = root.getTextContent().trim();
+            const isEmpty = text.length === 0 && !root.getChildren().some($isImageNode);
+            onInit(state, isEmpty, editor);
+          });
+        }
+      }
+      return;
+    }
+
+    // If initialState is different from what was last produced by typing or synced
+    if (contentStr !== lastContentRef.current) {
+      lastContentRef.current = contentStr;
+      applyContentToEditor(editor, contentStr);
+
+      // Keep markdownText in sync
+      if (!isJsonString(contentStr)) {
+        setMarkdownText(contentStr);
+      } else {
+        editor.getEditorState().read(() => {
+          setMarkdownText($convertToMarkdownString(CUSTOM_TRANSFORMERS));
+        });
+      }
+
+      if (onInit && !hasInitializedRef.current) {
+        hasInitializedRef.current = true;
+        queueMicrotask(() => {
+          const state = editor.getEditorState();
+          state.read(() => {
+            const root = $getRoot();
+            const text = root.getTextContent().trim();
+            const isEmpty = text.length === 0 && !root.getChildren().some($isImageNode);
+            onInit(state, isEmpty, editor);
+          });
+        });
+      }
+    } else if (!hasInitializedRef.current) {
+      hasInitializedRef.current = true;
+      if (onInit) {
+        const state = editor.getEditorState();
+        state.read(() => {
+          const root = $getRoot();
+          const text = root.getTextContent().trim();
+          const isEmpty = text.length === 0 && !root.getChildren().some($isImageNode);
+          onInit(state, isEmpty, editor);
+        });
+      }
+    }
+  }, [editor, initialState, onInit, lastContentRef, setMarkdownText]);
+
+  return null;
+}
+
 function LexicalEditorInner({
   onChange,
+  onInit,
   initialState,
   minHeight = "min-h-[250px]",
+  minHeightStyle,
   placeholder = "Enter some text...",
   onSubmitShortcut,
   onEditorReady,
   compact = false,
-}: LexicalEditorProps & { onEditorReady?: (editor: LexicalEditor) => void }) {
+  lastContentRef,
+  setMarkdownText,
+}: LexicalEditorProps & {
+  minHeightStyle?: string;
+  onEditorReady?: (editor: LexicalEditor) => void;
+  lastContentRef: React.MutableRefObject<string | null>;
+  setMarkdownText: React.Dispatch<React.SetStateAction<string>>;
+}) {
   const [editor] = useLexicalComposerContext();
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
     if (onEditorReady) {
       onEditorReady(editor);
     }
   }, [editor, onEditorReady]);
-
-  useEffect(() => {
-    if (initialState && isInitialLoad) {
-      queueMicrotask(() => {
-        try {
-          if (isJsonString(initialState)) {
-            const initialEditorState = editor.parseEditorState(initialState);
-            editor.setEditorState(initialEditorState);
-          } else {
-            editor.update(() => {
-              $convertFromMarkdownString(initialState, CUSTOM_TRANSFORMERS);
-            });
-          }
-        } catch (e) {
-          console.error("Error setting initial editor state:", e);
-        }
-      });
-      setIsInitialLoad(false);
-    }
-  }, [editor, initialState, isInitialLoad]);
 
   useEffect(() => {
     if (!onSubmitShortcut) return;
@@ -394,9 +571,11 @@ function LexicalEditorInner({
   function handleOnChange(editorState: EditorState, editorInstance: LexicalEditor) {
     editorState.read(() => {
       const root = $getRoot();
-      // @ts-expect-error - Lexical node isEmpty helper
-      const isEmpty = root.getFirstChild()?.isEmpty?.() && root.getChildrenSize() === 1;
-      onChange(editorState, Boolean(isEmpty), editorInstance);
+      const text = root.getTextContent().trim();
+      const isEmpty = text.length === 0 && !root.getChildren().some($isImageNode);
+      const jsonStr = JSON.stringify(editorState.toJSON());
+      lastContentRef.current = jsonStr;
+      onChange(editorState, isEmpty, editorInstance);
     });
   }
 
@@ -405,6 +584,7 @@ function LexicalEditorInner({
       <RichTextPlugin
         contentEditable={
           <ContentEditable
+            style={minHeightStyle ? { minHeight: minHeightStyle } : undefined}
             className={`editor-input ${compact ? "compact" : ""} ${minHeight}`}
           />
         }
@@ -416,8 +596,18 @@ function LexicalEditorInner({
         ErrorBoundary={LexicalErrorBoundary}
       />
       <HistoryPlugin />
+      <ListPlugin />
+      <LinkPlugin />
+      <AutoLinkPlugin matchers={MATCHERS} />
+      <TabIndentationPlugin />
       <OnChangePlugin onChange={handleOnChange} />
       <ImagePlugin />
+      <StateSyncPlugin
+        initialState={initialState}
+        onInit={onInit}
+        lastContentRef={lastContentRef}
+        setMarkdownText={setMarkdownText}
+      />
     </div>
   );
 }
@@ -432,15 +622,20 @@ export interface LexicalEditorProps {
    */
   onInit?: (editorState: EditorState, isEmpty: boolean, editor: LexicalEditor) => void;
   /**
-   * Initial content (either serialized Lexical JSON string or Markdown string).
+   * Initial content (serialized Lexical JSON string/object or Markdown string).
    */
-  initialState?: string;
+  initialState?: string | any;
   /**
-   * CSS class or min-height for the editor body when collapsed / default (e.g. "min-h-[250px]").
+   * Default editing mode: 'wysiwyg' (visual rich-text) or 'markdown' (raw text).
+   * Defaults to 'wysiwyg'.
+   */
+  defaultMode?: "wysiwyg" | "markdown";
+  /**
+   * CSS class or min-height for the editor body when collapsed / default (e.g. "min-h-[250px]" or "250px").
    */
   minHeight?: string;
   /**
-   * CSS class or min-height for the editor body when expanded (e.g. "min-h-[380px]").
+   * CSS class or min-height for the editor body when expanded (e.g. "min-h-[380px]" or "380px").
    */
   expandedMinHeight?: string;
   /**
@@ -456,7 +651,7 @@ export interface LexicalEditorProps {
    */
   className?: string;
   /**
-   * Theme mode: 'light' | 'dark' | 'unstyled' | 'auto' (browser preference)
+   * Theme mode: 'light' | 'dark' | 'unstyled' | 'auto' | 'system'
    * Defaults to 'auto'
    */
   theme?: EditorThemeMode;
@@ -488,27 +683,50 @@ export interface LexicalEditorProps {
   }) => React.ReactNode;
 }
 
-function EditorWrapper({
-  onChange,
-  initialState,
-  minHeight,
-  expandedMinHeight,
-  placeholder,
-  compact = false,
-  className,
-  theme = "auto",
-  onSubmitShortcut,
-  defaultToolbarOpen,
-  allowExpand = true,
-  renderCustomToolbarActions,
-}: LexicalEditorProps) {
-  const [mode, setMode] = useState<"wysiwyg" | "markdown">("wysiwyg");
-  const [markdownText, setMarkdownText] = useState<string>("");
+function normalizeMinHeight(heightVal?: string, defaultClass = "") {
+  if (!heightVal) return { className: defaultClass, styleVal: undefined };
+  // If it's a tailwind class (starts with min-h- or h-)
+  if (heightVal.startsWith("min-h-") || heightVal.startsWith("h-")) {
+    return { className: heightVal, styleVal: undefined };
+  }
+  // If it's a CSS measurement (e.g., 250px, 15rem, etc.)
+  return { className: defaultClass, styleVal: heightVal };
+}
+
+const EditorWrapper = forwardRef<EditorRef, LexicalEditorProps>(function EditorWrapper(
+  {
+    onChange,
+    onInit,
+    initialState,
+    defaultMode = "wysiwyg",
+    minHeight,
+    expandedMinHeight,
+    placeholder,
+    compact = false,
+    className,
+    theme = "auto",
+    onSubmitShortcut,
+    defaultToolbarOpen,
+    allowExpand = true,
+    renderCustomToolbarActions,
+  },
+  ref
+) {
+  const [mode, setMode] = useState<"wysiwyg" | "markdown">(defaultMode);
+  const [markdownText, setMarkdownText] = useState<string>(() => {
+    const content = normalizeContentString(initialState);
+    if (content && !isJsonString(content)) {
+      return content;
+    }
+    return "";
+  });
   const [markdownPreview, setMarkdownPreview] = useState(false);
   const [editorRef, setEditorRef] = useState<LexicalEditor | null>(null);
+  const lastContentRef = useRef<string | null>(normalizeContentString(initialState) || null);
 
-  // Determine active theme mode ('light', 'dark', 'unstyled', 'auto')
-  const activeTheme: EditorThemeMode = theme || "auto";
+  // Determine active theme mode ('light', 'dark', 'unstyled', 'auto', 'system')
+  const activeTheme: EditorThemeMode =
+    theme === "system" ? "auto" : theme || "auto";
 
   const themeClassName =
     activeTheme === "light"
@@ -519,7 +737,7 @@ function EditorWrapper({
       ? "editor-unstyled"
       : "editor-theme-auto";
 
-  // Collapsible toolbar state (defaults to collapsed in compact mode, expanded otherwise)
+  // Collapsible toolbar state
   const [showToolbar, setShowToolbar] = useState<boolean>(
     defaultToolbarOpen !== undefined ? defaultToolbarOpen : !compact
   );
@@ -527,16 +745,17 @@ function EditorWrapper({
   // Expandable height state
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
-  const effectiveMinHeight = isExpanded
-    ? expandedMinHeight || (compact ? "min-h-[170px]" : "min-h-[380px]")
-    : minHeight || (compact ? "min-h-[44px]" : "min-h-[250px]");
+  const defaultMinClass = isExpanded
+    ? compact
+      ? "min-h-[170px]"
+      : "min-h-[380px]"
+    : compact
+    ? "min-h-[44px]"
+    : "min-h-[250px]";
 
-  useEffect(() => {
-    if (initialState && !isJsonString(initialState)) {
-      setMarkdownText(initialState);
-      setMode("markdown");
-    }
-  }, [initialState]);
+  const rawMinHeight = isExpanded ? expandedMinHeight : minHeight;
+  const { className: minHeightClass, styleVal: minHeightStyle } =
+    normalizeMinHeight(rawMinHeight, defaultMinClass);
 
   // Sync markdownText clearing when root is cleared externally
   useEffect(() => {
@@ -544,12 +763,8 @@ function EditorWrapper({
     return editorRef.registerUpdateListener(({ editorState }) => {
       editorState.read(() => {
         const root = $getRoot();
-        if (root.getTextContent().length === 0 && root.getChildrenSize() <= 1) {
-          const firstChild = root.getFirstChild();
-          // @ts-expect-error - Lexical node isEmpty helper
-          if (!firstChild || firstChild.isEmpty?.()) {
-            setMarkdownText("");
-          }
+        if (root.getTextContent().length === 0 && !root.getChildren().some($isImageNode)) {
+          setMarkdownText("");
         }
       });
     });
@@ -573,6 +788,8 @@ function EditorWrapper({
           $convertFromMarkdownString(markdownText, CUSTOM_TRANSFORMERS);
         }
       });
+      const json = JSON.stringify(editorRef.getEditorState().toJSON());
+      lastContentRef.current = json;
     }
     setMode("wysiwyg");
   };
@@ -586,13 +803,24 @@ function EditorWrapper({
           $convertFromMarkdownString(text, CUSTOM_TRANSFORMERS);
         }
       });
+      const json = JSON.stringify(editorRef.getEditorState().toJSON());
+      lastContentRef.current = json;
     }
   };
 
   const handleMarkdownChange = (newMarkdown: string) => {
     setMarkdownText(newMarkdown);
     if (editorRef) {
-      onChange(editorRef.getEditorState(), newMarkdown.trim().length === 0, editorRef);
+      editorRef.update(() => {
+        $getRoot().clear();
+        if (newMarkdown) {
+          $convertFromMarkdownString(newMarkdown, CUSTOM_TRANSFORMERS);
+        }
+      });
+      const state = editorRef.getEditorState();
+      const json = JSON.stringify(state.toJSON());
+      lastContentRef.current = json;
+      onChange(state, newMarkdown.trim().length === 0, editorRef);
     }
   };
 
@@ -618,7 +846,10 @@ function EditorWrapper({
     if (mode === "wysiwyg" && editorRef) {
       editorRef.update(() => {
         const selection = $getSelection();
-        const linkNode = $createLinkNode(url, { target: "_blank", rel: "noopener noreferrer" });
+        const linkNode = $createLinkNode(url, {
+          target: "_blank",
+          rel: "noopener noreferrer",
+        });
         const textNode = $createTextNode(title || url);
         linkNode.append(textNode);
         if ($isRangeSelection(selection)) {
@@ -634,6 +865,73 @@ function EditorWrapper({
       insertMarkdownSnippet(`[${title || url}](${url})`);
     }
   };
+
+  // Expose imperative handle via ref
+  useImperativeHandle(
+    ref,
+    () => ({
+      getEditor: () => editorRef,
+      focus: () => {
+        editorRef?.focus();
+      },
+      clear: () => {
+        if (editorRef) {
+          editorRef.update(() => {
+            $getRoot().clear();
+            const p = $createParagraphNode();
+            $getRoot().append(p);
+          });
+        }
+        setMarkdownText("");
+        lastContentRef.current = "";
+      },
+      getMarkdown: () => {
+        if (mode === "markdown") {
+          return markdownText;
+        }
+        let md = "";
+        editorRef?.getEditorState().read(() => {
+          md = $convertToMarkdownString(CUSTOM_TRANSFORMERS);
+        });
+        return md;
+      },
+      getJSON: () => {
+        return JSON.stringify(editorRef?.getEditorState().toJSON() || {});
+      },
+      isEmpty: () => {
+        if (mode === "markdown") {
+          return markdownText.trim().length === 0;
+        }
+        let empty = true;
+        editorRef?.getEditorState().read(() => {
+          const root = $getRoot();
+          empty =
+            root.getTextContent().trim().length === 0 &&
+            !root.getChildren().some($isImageNode);
+        });
+        return empty;
+      },
+      setMarkdown: (markdown: string) => {
+        setMarkdownText(markdown);
+        if (editorRef) {
+          applyContentToEditor(editorRef, markdown);
+          lastContentRef.current = markdown;
+        }
+      },
+      setJSON: (jsonString: string) => {
+        if (editorRef && isJsonString(jsonString)) {
+          try {
+            const parsed = editorRef.parseEditorState(jsonString);
+            editorRef.setEditorState(parsed);
+            lastContentRef.current = jsonString;
+          } catch (e) {
+            console.error("Error setting JSON in editor:", e);
+          }
+        }
+      },
+    }),
+    [editorRef, mode, markdownText]
+  );
 
   const containerClasses = [
     "editor-container",
@@ -746,11 +1044,15 @@ function EditorWrapper({
             setEditorRef(editor);
             onChange(editorState, isEmpty, editor);
           }}
+          onInit={onInit}
           initialState={initialState}
-          minHeight={effectiveMinHeight}
+          minHeight={minHeightClass}
+          minHeightStyle={minHeightStyle}
           placeholder={placeholder}
           onSubmitShortcut={handleShortcut}
           compact={compact}
+          lastContentRef={lastContentRef}
+          setMarkdownText={setMarkdownText}
         />
       </div>
 
@@ -825,11 +1127,15 @@ function EditorWrapper({
                 }}
                 placeholder={placeholder || "Type or paste your Markdown content here..."}
                 rows={isExpanded ? 12 : compact ? 4 : 8}
-                className={`editor-markdown-textarea ${effectiveMinHeight}`}
+                style={minHeightStyle ? { minHeight: minHeightStyle } : undefined}
+                className={`editor-markdown-textarea ${minHeightClass}`}
               />
             </>
           ) : (
-            <div className={`editor-markdown-preview ${effectiveMinHeight}`}>
+            <div
+              style={minHeightStyle ? { minHeight: minHeightStyle } : undefined}
+              className={`editor-markdown-preview ${minHeightClass}`}
+            >
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {markdownText || "*No content to preview*"}
               </ReactMarkdown>
@@ -839,11 +1145,25 @@ function EditorWrapper({
       </div>
     </div>
   );
-}
+});
 
-export function Editor(props: LexicalEditorProps) {
+export const Editor = forwardRef<EditorRef, LexicalEditorProps>(function Editor(
+  props,
+  ref
+) {
   const { initialState, themeConfig } = props;
   const mergedTheme = themeConfig ? { ...LexicalTheme, ...themeConfig } : LexicalTheme;
+
+  const initialEditorState = React.useMemo(() => {
+    const content = normalizeContentString(initialState);
+    if (!content) return undefined;
+    if (isJsonString(content)) {
+      return content;
+    }
+    return () => {
+      $convertFromMarkdownString(content, CUSTOM_TRANSFORMERS);
+    };
+  }, [initialState]);
 
   return (
     <LexicalComposer
@@ -851,19 +1171,23 @@ export function Editor(props: LexicalEditorProps) {
         namespace: "LexicalEditor",
         onError,
         editable: true,
-        nodes: [ImageNode, LinkNode, HeadingNode, QuoteNode, ListNode, ListItemNode, CodeNode],
+        nodes: [
+          ImageNode,
+          AutoLinkNode,
+          LinkNode,
+          HeadingNode,
+          QuoteNode,
+          ListNode,
+          ListItemNode,
+          CodeNode,
+        ],
         theme: mergedTheme,
-        editorState:
-          initialState && !isJsonString(initialState)
-            ? () => {
-                $convertFromMarkdownString(initialState, CUSTOM_TRANSFORMERS);
-              }
-            : initialState || undefined,
+        editorState: initialEditorState,
       }}
     >
-      <EditorWrapper {...props} />
+      <EditorWrapper ref={ref} {...props} />
     </LexicalComposer>
   );
-}
+});
 
 export default Editor;

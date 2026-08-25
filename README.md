@@ -11,11 +11,13 @@ Supports **React 18 & 19**, **Next.js (App Router & Pages Router)**, **Vite**, *
 - 📝 **Dual-Mode Editing**: Switch seamlessly between visual WYSIWYG rich-text and raw Markdown editing with live preview.
 - 🎨 **Universal Renderer**: `<LexicalRenderer />` automatically detects whether the input is serialized Lexical JSON or raw Markdown and renders it beautifully.
 - 🌓 **Flexible Theming**:
+  - **Auto / System**: Follow user's OS / browser color scheme (`theme="system"` or `theme="auto"` - default).
   - **Light Mode**: Force light theme (`theme="light"`).
   - **Dark Mode**: Force dark theme (`theme="dark"`).
-  - **System / Browser Preference**: Follow user's OS / browser color scheme (`theme="system"` - default).
-  - **Unstyled / Headless**: Disable opinionated styling for 100% custom styling by the developer (`unstyled={true}` or `theme="unstyled"`).
+  - **Unstyled / Headless**: Disable opinionated styling for 100% custom styling by the developer (`theme="unstyled"`).
   - **CSS Custom Properties**: Easily customize colors, borders, and radius via CSS variables (`--editor-primary`, `--editor-background`, etc.).
+- 🎮 **Imperative Ref Control**: Expose `clear()`, `focus()`, `getMarkdown()`, `getJSON()`, `isEmpty()`, `setMarkdown()`, and `setJSON()` via `useRef<EditorRef>()`.
+- ⚡ **Full Lexical Plugin Suite**: Includes Lists (`ListPlugin`), AutoLink & Link (`LinkPlugin`, `AutoLinkPlugin`), Tab Indentation (`TabIndentationPlugin`), History, Markdown Transformers, and Images.
 - 📄 **Plain Text Rendering & Extraction**:
   - `<PlainTextRenderer />` component to render stripped plain text with optional truncation.
   - `getPlainTextFromRichText(content, maxLen?)` utility for clean summaries/previews in search results, cards, and metadata.
@@ -59,41 +61,56 @@ import "react-lexical-markdown-editor/styles.css";
 ```tsx
 "use client";
 
-import { useState } from "react";
-import { Editor, getPlainTextFromRichText } from "react-lexical-markdown-editor";
+import { useRef, useState } from "react";
+import { Editor, EditorRef, getPlainTextFromRichText } from "react-lexical-markdown-editor";
 
 export function PostEditor() {
+  const editorRef = useRef<EditorRef>(null);
   const [content, setContent] = useState("");
   const [isEmpty, setIsEmpty] = useState(true);
 
   return (
     <div className="max-w-2xl mx-auto space-y-4">
       <Editor
+        ref={editorRef}
         initialState={content}
         placeholder="Write your story or type markdown..."
-        minHeight="min-h-[250px]"
-        theme="system" // "light" | "dark" | "system" | "unstyled"
+        minHeight="250px"
+        theme="system" // "system" | "auto" | "light" | "dark" | "unstyled"
         onChange={(editorState, empty) => {
           setIsEmpty(empty);
           // Convert Lexical state to JSON string or markdown
           const jsonString = JSON.stringify(editorState.toJSON());
           setContent(jsonString);
         }}
+        onInit={(editorState, empty) => {
+          setIsEmpty(empty);
+        }}
         onSubmitShortcut={() => {
           console.log("Submitted with Cmd/Ctrl+Enter!");
         }}
       />
 
-      <button
-        disabled={isEmpty}
-        className="px-4 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
-        onClick={() => {
-          console.log("Saving content:", content);
-          console.log("Plaintext preview:", getPlainTextFromRichText(content, 120));
-        }}
-      >
-        Publish Post
-      </button>
+      <div className="flex gap-2">
+        <button
+          disabled={isEmpty}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md disabled:opacity-50"
+          onClick={() => {
+            console.log("Saving content:", content);
+            console.log("Markdown output:", editorRef.current?.getMarkdown());
+            console.log("Plaintext preview:", getPlainTextFromRichText(content, 120));
+          }}
+        >
+          Publish Post
+        </button>
+
+        <button
+          className="px-4 py-2 border rounded-md"
+          onClick={() => editorRef.current?.clear()}
+        >
+          Clear
+        </button>
+      </div>
     </div>
   );
 }
@@ -127,24 +144,24 @@ export function ArticleView({ postContent }: { postContent: string }) {
 
 The editor and renderer support multiple styling modes out of the box:
 
-#### A. Light Mode (Forced)
+#### A. Auto / System (Default)
+Automatically responds to `@media (prefers-color-scheme: dark)` or parent `.dark` classes:
+```tsx
+<Editor theme="system" initialState={content} onChange={handleChange} />
+```
+
+#### B. Light Mode (Forced)
 ```tsx
 <Editor theme="light" initialState={content} onChange={handleChange} />
 ```
 
-#### B. Dark Mode (Forced)
+#### C. Dark Mode (Forced)
 ```tsx
 <Editor theme="dark" initialState={content} onChange={handleChange} />
 ```
 
-#### C. Auto / Browser Preference (Default)
-Automatically responds to `@media (prefers-color-scheme: dark)` or parent `.dark` classes:
-```tsx
-<Editor theme="auto" initialState={content} onChange={handleChange} />
-```
-
 #### D. Unstyled / Headless (Full Customization by Developer)
-Disables all default borders, backgrounds, colors, and shadows, allowing you to style everything with Tailwind CSS or custom styles:
+Disables default opinionated borders, backgrounds, and shadows:
 ```tsx
 <Editor
   theme="unstyled"
@@ -205,12 +222,13 @@ export function PostCard({ post }: { post: { title: string; content: string } })
 | Prop | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
 | `onChange` | `(editorState: EditorState, isEmpty: boolean, editor: LexicalEditor) => void` | **Required** | Triggered on every content change. |
+| `onInit` | `(editorState: EditorState, isEmpty: boolean, editor: LexicalEditor) => void` | `undefined` | Triggered once on initial editor mount. |
 | `initialState` | `string` | `undefined` | Initial content as Lexical JSON or Markdown string. |
-| `theme` | `'light' \| 'dark' \| 'unstyled' \| 'auto'` | `'auto'` | Color theme mode. |
+| `theme` | `'light' \| 'dark' \| 'unstyled' \| 'auto' \| 'system'` | `'auto'` | Color theme mode. |
 | `themeConfig` | `Record<string, any>` | `undefined` | Custom Lexical theme configuration classes. |
 | `placeholder` | `string` | `"Enter some text..."` | Placeholder text when empty. |
-| `minHeight` | `string` | `"min-h-[250px]"` | CSS min-height class for standard view. |
-| `expandedMinHeight` | `string` | `"min-h-[380px]"` | CSS min-height class when expanded. |
+| `minHeight` | `string` | `"min-h-[250px]"` | CSS min-height (e.g. `"250px"` or `"min-h-[250px]"`). |
+| `expandedMinHeight` | `string` | `"min-h-[380px]"` | CSS min-height when expanded (e.g. `"380px"`). |
 | `compact` | `boolean` | `false` | Compact styling for comment/reply boxes. |
 | `allowExpand` | `boolean` | `true` | Show/hide expand and collapse toggle button. |
 | `defaultToolbarOpen`| `boolean` | `true` (false in compact) | Toolbar open state by default. |
@@ -220,12 +238,29 @@ export function PostCard({ post }: { post: { title: string; content: string } })
 
 ---
 
+### `EditorRef` Methods
+
+Accessible via `ref={editorRef}`:
+
+| Method | Return Type | Description |
+| :--- | :--- | :--- |
+| `getEditor()` | `LexicalEditor \| null` | Access the underlying Lexical editor instance. |
+| `focus()` | `void` | Focus the editor input. |
+| `clear()` | `void` | Clear the editor content. |
+| `getMarkdown()` | `string` | Get current content converted to Markdown. |
+| `getJSON()` | `string` | Get current content as serialized Lexical JSON string. |
+| `isEmpty()` | `boolean` | Check if editor is empty. |
+| `setMarkdown(md)` | `void` | Programmatically set content from Markdown string. |
+| `setJSON(json)` | `void` | Programmatically set content from Lexical JSON string. |
+
+---
+
 ### `<LexicalRenderer />` Props
 
 | Prop | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
 | `initialState` | `string` | **Required** | Serialized Lexical JSON or Markdown string. |
-| `theme` | `'light' \| 'dark' \| 'unstyled' \| 'auto'` | `'auto'` | Color theme mode. |
+| `theme` | `'light' \| 'dark' \| 'unstyled' \| 'auto' \| 'system'` | `'auto'` | Color theme mode. |
 | `themeConfig` | `Record<string, any>` | `undefined` | Custom Lexical theme classes. |
 | `className` | `string` | `undefined` | Custom container class name. |
 

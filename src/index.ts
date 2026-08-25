@@ -1,6 +1,11 @@
 // Components
 export { Editor, default as LexicalEditor } from "./components/Editor";
-export type { LexicalEditorProps, EditorThemeMode } from "./components/Editor";
+export type {
+  LexicalEditorProps,
+  EditorThemeMode,
+  EditorRef,
+  LexicalEditorRef,
+} from "./components/Editor";
 
 export { LexicalRenderer, default as Renderer } from "./components/LexicalRenderer";
 export type { LexicalRendererProps } from "./components/LexicalRenderer";

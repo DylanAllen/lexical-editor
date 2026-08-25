@@ -3,9 +3,9 @@ import { getPlainTextFromRichText } from "../lib/utils";
 
 export interface PlainTextRendererProps extends React.HTMLAttributes<HTMLElement> {
   /**
-   * The rich text content (Lexical JSON string, Markdown string, or plain text)
+   * The rich text content (Lexical JSON string/object, Markdown string, or plain text)
    */
-  content: string;
+  content: string | any;
   /**
    * Optional maximum length before truncating
    */

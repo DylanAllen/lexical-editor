@@ -42,7 +42,7 @@ function ImageComponent({
         height: height === "inherit" || !height ? "auto" : height,
         width: width === "inherit" || !width ? "auto" : width,
       }}
-      className="editor-image rounded-md border border-gray-200 dark:border-gray-800 my-2"
+      className="editor-image"
     />
   );
 }
@@ -129,6 +129,10 @@ export class ImageNode extends DecoratorNode<React.ReactNode> {
 
   getAltText(): string {
     return this.__altText;
+  }
+
+  getTextContent(): string {
+    return this.__altText ? `[Image: ${this.__altText}]` : "[Image]";
   }
 
   decorate(): React.ReactNode {
