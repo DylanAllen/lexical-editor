@@ -10,6 +10,12 @@ Supports **React 18 & 19**, **Next.js (App Router & Pages Router)**, **Vite**, *
 
 - 📝 **Dual-Mode Editing**: Switch seamlessly between visual WYSIWYG rich-text and raw Markdown editing with live preview.
 - 🎨 **Universal Renderer**: `<LexicalRenderer />` automatically detects whether the input is serialized Lexical JSON or raw Markdown and renders it beautifully.
+- 🌓 **Flexible Theming**:
+  - **Light Mode**: Force light theme (`theme="light"`).
+  - **Dark Mode**: Force dark theme (`theme="dark"`).
+  - **System / Browser Preference**: Follow user's OS / browser color scheme (`theme="system"` - default).
+  - **Unstyled / Headless**: Disable opinionated styling for 100% custom styling by the developer (`unstyled={true}` or `theme="unstyled"`).
+  - **CSS Custom Properties**: Easily customize colors, borders, and radius via CSS variables (`--editor-primary`, `--editor-background`, etc.).
 - 📄 **Plain Text Rendering & Extraction**:
   - `<PlainTextRenderer />` component to render stripped plain text with optional truncation.
   - `getPlainTextFromRichText(content, maxLen?)` utility for clean summaries/previews in search results, cards, and metadata.
@@ -66,6 +72,7 @@ export function PostEditor() {
         initialState={content}
         placeholder="Write your story or type markdown..."
         minHeight="min-h-[250px]"
+        theme="system" // "light" | "dark" | "system" | "unstyled"
         onChange={(editorState, empty) => {
           setIsEmpty(empty);
           // Convert Lexical state to JSON string or markdown
@@ -104,7 +111,11 @@ import { LexicalRenderer } from "react-lexical-markdown-editor";
 export function ArticleView({ postContent }: { postContent: string }) {
   return (
     <article className="max-w-3xl mx-auto py-8">
-      <LexicalRenderer initialState={postContent} className="text-gray-800 dark:text-gray-200" />
+      <LexicalRenderer
+        initialState={postContent}
+        theme="system"
+        className="text-gray-800 dark:text-gray-200"
+      />
     </article>
   );
 }
@@ -112,7 +123,53 @@ export function ArticleView({ postContent }: { postContent: string }) {
 
 ---
 
-### 4. Plain Text Component & Extraction Utilities
+### 4. Theme & Styling Options
+
+The editor and renderer support multiple styling modes out of the box:
+
+#### A. Light Mode (Forced)
+```tsx
+<Editor theme="light" initialState={content} onChange={handleChange} />
+```
+
+#### B. Dark Mode (Forced)
+```tsx
+<Editor theme="dark" initialState={content} onChange={handleChange} />
+```
+
+#### C. Auto / Browser Preference (Default)
+Automatically responds to `@media (prefers-color-scheme: dark)` or parent `.dark` classes:
+```tsx
+<Editor theme="auto" initialState={content} onChange={handleChange} />
+```
+
+#### D. Unstyled / Headless (Full Customization by Developer)
+Disables all default borders, backgrounds, colors, and shadows, allowing you to style everything with Tailwind CSS or custom styles:
+```tsx
+<Editor
+  theme="unstyled"
+  className="border-2 border-dashed border-purple-500 rounded-xl p-4 bg-purple-50"
+  initialState={content}
+  onChange={handleChange}
+/>
+```
+
+#### E. Custom CSS Variables
+You can customize the theme colors by overriding CSS custom properties in your stylesheet or on the container:
+
+```css
+.my-custom-editor {
+  --editor-primary: #10b981; /* Emerald green */
+  --editor-primary-hover: #059669;
+  --editor-background: #fafafa;
+  --editor-border: #e4e4e7;
+  --editor-radius: 12px;
+}
+```
+
+---
+
+### 5. Plain Text Component & Extraction Utilities
 
 Use `<PlainTextRenderer />` or `getPlainTextFromRichText` for card previews, meta descriptions, search snippets, or character-limited teasers:
 
@@ -149,6 +206,8 @@ export function PostCard({ post }: { post: { title: string; content: string } })
 | :--- | :--- | :--- | :--- |
 | `onChange` | `(editorState: EditorState, isEmpty: boolean, editor: LexicalEditor) => void` | **Required** | Triggered on every content change. |
 | `initialState` | `string` | `undefined` | Initial content as Lexical JSON or Markdown string. |
+| `theme` | `'light' \| 'dark' \| 'unstyled' \| 'auto'` | `'auto'` | Color theme mode. |
+| `themeConfig` | `Record<string, any>` | `undefined` | Custom Lexical theme configuration classes. |
 | `placeholder` | `string` | `"Enter some text..."` | Placeholder text when empty. |
 | `minHeight` | `string` | `"min-h-[250px]"` | CSS min-height class for standard view. |
 | `expandedMinHeight` | `string` | `"min-h-[380px]"` | CSS min-height class when expanded. |
@@ -166,6 +225,8 @@ export function PostCard({ post }: { post: { title: string; content: string } })
 | Prop | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
 | `initialState` | `string` | **Required** | Serialized Lexical JSON or Markdown string. |
+| `theme` | `'light' \| 'dark' \| 'unstyled' \| 'auto'` | `'auto'` | Color theme mode. |
+| `themeConfig` | `Record<string, any>` | `undefined` | Custom Lexical theme classes. |
 | `className` | `string` | `undefined` | Custom container class name. |
 
 ---

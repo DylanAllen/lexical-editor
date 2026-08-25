@@ -56,7 +56,6 @@ import {
 
 import { ImageNode, $createImageNode, $isImageNode } from "./ImageNode";
 import ImagePlugin, { INSERT_IMAGE_COMMAND } from "./ImagePlugin";
-import { Button } from "./ui/button";
 import {
   Dialog,
   DialogClose,
@@ -70,6 +69,8 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import LexicalTheme from "../lib/lexical-theme";
 import { isJsonString } from "../lib/utils";
+
+export type EditorThemeMode = "light" | "dark" | "unstyled" | "auto";
 
 export const IMAGE_TRANSFORMER: TextMatchTransformer = {
   dependencies: [ImageNode],
@@ -107,24 +108,23 @@ function ImageDialog({
   compact?: boolean;
 }) {
   const [url, setUrl] = useState("");
+  const iconSize = compact ? 14 : 16;
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button
+        <button
           type="button"
           title="Insert image"
-          variant="ghost"
-          size="icon"
-          className={compact ? "h-6 w-6 p-0" : "h-8 w-8"}
+          className={`toolbar-item ${compact ? "compact" : ""}`}
         >
-          <ImageIcon className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
-        </Button>
+          <ImageIcon size={iconSize} />
+        </button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="editor-dialog-content">
         <DialogHeader>
-          <DialogTitle>Insert Image</DialogTitle>
+          <DialogTitle className="dialog-title">Insert Image</DialogTitle>
         </DialogHeader>
-        <div className="space-y-2 py-2">
+        <div style={{ margin: "0.75rem 0" }}>
           <Label htmlFor="imageUrl">Image URL</Label>
           <Input
             id="imageUrl"
@@ -133,17 +133,87 @@ function ImageDialog({
             placeholder="https://example.com/image.png"
           />
         </div>
-        <DialogFooter>
+        <DialogFooter className="editor-dialog-footer">
           <DialogClose asChild>
-            <Button
+            <button
               type="button"
+              className="editor-dialog-btn-primary"
               onClick={() => {
-                onOk(url);
-                setUrl("");
+                if (url.trim()) {
+                  onOk(url.trim());
+                  setUrl("");
+                }
               }}
             >
-              Insert
-            </Button>
+              Insert Image
+            </button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function LinkDialog({
+  onOk,
+  compact = false,
+}: {
+  onOk: (url: string, title?: string) => void;
+  compact?: boolean;
+}) {
+  const [url, setUrl] = useState("");
+  const [title, setTitle] = useState("");
+  const iconSize = compact ? 14 : 16;
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <button
+          type="button"
+          title="Insert link"
+          className={`toolbar-item ${compact ? "compact" : ""}`}
+        >
+          <LinkIcon size={iconSize} />
+        </button>
+      </DialogTrigger>
+      <DialogContent className="editor-dialog-content">
+        <DialogHeader>
+          <DialogTitle className="dialog-title">Insert Link</DialogTitle>
+        </DialogHeader>
+        <div style={{ margin: "0.75rem 0" }}>
+          <div style={{ marginBottom: "0.75rem" }}>
+            <Label htmlFor="linkText">Link Text (Optional)</Label>
+            <Input
+              id="linkText"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Visit Website"
+            />
+          </div>
+          <div>
+            <Label htmlFor="linkUrl">URL</Label>
+            <Input
+              id="linkUrl"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://example.com"
+            />
+          </div>
+        </div>
+        <DialogFooter className="editor-dialog-footer">
+          <DialogClose asChild>
+            <button
+              type="button"
+              className="editor-dialog-btn-primary"
+              onClick={() => {
+                if (url.trim()) {
+                  onOk(url.trim(), title.trim());
+                  setUrl("");
+                  setTitle("");
+                }
+              }}
+            >
+              Insert Link
+            </button>
           </DialogClose>
         </DialogFooter>
       </DialogContent>
@@ -209,55 +279,50 @@ function Toolbar({
   }, [editor, $updateToolbar]);
 
   const btnClass = (active: boolean) =>
-    `toolbar-item ${active ? "active" : ""} ${compact ? "h-6 w-6 p-0" : "h-8 w-8"}`;
-  const iconClass = compact ? "h-3.5 w-3.5" : "h-4 w-4";
+    `toolbar-item ${active ? "active" : ""} ${compact ? "compact" : ""}`;
+  const iconSize = compact ? 14 : 16;
 
   return (
-    <div
-      className={`editor-toolbar border-b flex flex-wrap gap-0.5 sm:gap-1 items-center animate-in fade-in-50 duration-200 ${
-        compact ? "pb-1.5 mb-1.5" : "pb-2 mb-2"
-      }`}
-    >
-      <Button
+    <div className="editor-toolbar">
+      <button
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")}
         type="button"
         title="Bold"
         className={btnClass(isBold)}
-        variant="ghost"
-        size="icon"
       >
-        <Bold className={iconClass} />
-      </Button>
-      <Button
+        <Bold size={iconSize} />
+      </button>
+      <button
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic")}
         type="button"
         title="Italic"
-        variant="ghost"
         className={btnClass(isItalic)}
-        size="icon"
       >
-        <Italic className={iconClass} />
-      </Button>
-      <Button
+        <Italic size={iconSize} />
+      </button>
+      <button
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline")}
         type="button"
         title="Underline"
         className={btnClass(isUnderline)}
-        variant="ghost"
-        size="icon"
       >
-        <Underline className={iconClass} />
-      </Button>
-      <Button
+        <Underline size={iconSize} />
+      </button>
+      <button
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "strikethrough")}
         className={btnClass(isStrikethrough)}
         type="button"
         title="Strikethrough"
-        variant="ghost"
-        size="icon"
       >
-        <Strikethrough className={iconClass} />
-      </Button>
+        <Strikethrough size={iconSize} />
+      </button>
+
+      <span className="editor-divider" />
+
+      <LinkDialog
+        onOk={(url, linkTitle) => onInsertLink(linkTitle || url, url)}
+        compact={compact}
+      />
       <ImageDialog onOk={onImageInsert} compact={compact} />
 
       {renderCustomActions &&
@@ -336,21 +401,15 @@ function LexicalEditorInner({
   }
 
   return (
-    <div className="relative">
+    <div className="editor-body-wrapper">
       <RichTextPlugin
         contentEditable={
           <ContentEditable
-            className={`editor-input ${minHeight} ${
-              compact ? "p-2 text-sm leading-relaxed" : "p-3"
-            } border border-gray-200 dark:border-gray-800 rounded-md focus:outline-hidden bg-transparent transition-[min-height] duration-200`}
+            className={`editor-input ${compact ? "compact" : ""} ${minHeight}`}
           />
         }
         placeholder={
-          <div
-            className={`editor-placeholder absolute ${
-              compact ? "top-2 left-2 text-xs" : "top-3 left-3 text-sm"
-            } text-gray-400 dark:text-gray-500 pointer-events-none`}
-          >
+          <div className={`editor-placeholder ${compact ? "compact" : ""}`}>
             {placeholder}
           </div>
         }
@@ -397,6 +456,15 @@ export interface LexicalEditorProps {
    */
   className?: string;
   /**
+   * Theme mode: 'light' | 'dark' | 'unstyled' | 'auto' (browser preference)
+   * Defaults to 'auto'
+   */
+  theme?: EditorThemeMode;
+  /**
+   * Optional custom Lexical theme configuration to override default classes.
+   */
+  themeConfig?: Record<string, any>;
+  /**
    * Callback when Cmd+Enter or Ctrl+Enter shortcut is pressed.
    */
   onSubmitShortcut?: () => void;
@@ -428,6 +496,7 @@ function EditorWrapper({
   placeholder,
   compact = false,
   className,
+  theme = "auto",
   onSubmitShortcut,
   defaultToolbarOpen,
   allowExpand = true,
@@ -437,6 +506,18 @@ function EditorWrapper({
   const [markdownText, setMarkdownText] = useState<string>("");
   const [markdownPreview, setMarkdownPreview] = useState(false);
   const [editorRef, setEditorRef] = useState<LexicalEditor | null>(null);
+
+  // Determine active theme mode ('light', 'dark', 'unstyled', 'auto')
+  const activeTheme: EditorThemeMode = theme || "auto";
+
+  const themeClassName =
+    activeTheme === "light"
+      ? "editor-theme-light"
+      : activeTheme === "dark"
+      ? "editor-theme-dark"
+      : activeTheme === "unstyled"
+      ? "editor-unstyled"
+      : "editor-theme-auto";
 
   // Collapsible toolbar state (defaults to collapsed in compact mode, expanded otherwise)
   const [showToolbar, setShowToolbar] = useState<boolean>(
@@ -554,119 +635,101 @@ function EditorWrapper({
     }
   };
 
+  const containerClasses = [
+    "editor-container",
+    compact ? "compact" : "",
+    themeClassName,
+    className || "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <div
-      className={
-        className ||
-        `editor-container border rounded-lg ${
-          compact ? "p-2 space-y-1.5" : "p-4 space-y-3"
-        } shadow-xs transition-all duration-200`
-      }
-    >
-      {/* Header with Collapsible Format Toolbar Toggle & Expand/Collapse Mode */}
-      <div className={`flex flex-wrap items-center justify-between gap-1.5 border-b border-gray-200 dark:border-gray-800 ${compact ? "pb-1.5" : "pb-3"}`}>
-        <div className="flex items-center gap-1">
+    <div className={containerClasses} data-editor-theme={activeTheme}>
+      {/* Header Bar */}
+      <div className="editor-header-bar">
+        <div className="editor-header-left">
           {/* Format / Toolbar Toggle */}
-          <Button
+          <button
             type="button"
-            variant={showToolbar ? "secondary" : "ghost"}
-            size="sm"
+            className="format-btn"
             onClick={() => setShowToolbar(!showToolbar)}
-            className={`text-xs gap-1 cursor-pointer ${compact ? "h-6 px-2 text-[11px]" : "h-7 px-2.5"}`}
             title={showToolbar ? "Hide formatting toolbar" : "Show formatting toolbar"}
           >
-            <Sparkles className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+            <Sparkles size={13} style={{ color: "var(--editor-primary)" }} />
             <span>Format</span>
             {showToolbar ? (
-              <ChevronUp className="h-3 w-3 opacity-60" />
+              <ChevronUp size={12} style={{ opacity: 0.6 }} />
             ) : (
-              <ChevronDown className="h-3 w-3 opacity-60" />
+              <ChevronDown size={12} style={{ opacity: 0.6 }} />
             )}
-          </Button>
+          </button>
 
           {/* Mode Switcher */}
           {showToolbar && (
-            <div className="flex items-center space-x-0.5 bg-gray-100 dark:bg-gray-800 p-0.5 rounded-md text-xs font-medium animate-in fade-in-50 duration-150">
+            <div className="editor-mode-pill">
               <button
                 type="button"
                 onClick={switchToWysiwyg}
-                className={`flex items-center gap-1 px-2 py-0.5 rounded-xs transition-all cursor-pointer text-[11px] ${
-                  mode === "wysiwyg"
-                    ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-xs font-semibold"
-                    : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-                }`}
+                className={mode === "wysiwyg" ? "active" : ""}
               >
-                <Type className="h-3 w-3" />
+                <Type size={12} />
                 Visual
               </button>
               <button
                 type="button"
                 onClick={switchToMarkdown}
-                className={`flex items-center gap-1 px-2 py-0.5 rounded-xs transition-all cursor-pointer text-[11px] ${
-                  mode === "markdown"
-                    ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 shadow-xs font-semibold"
-                    : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-                }`}
+                className={mode === "markdown" ? "active" : ""}
               >
-                <FileText className="h-3 w-3" />
+                <FileText size={12} />
                 Markdown
               </button>
             </div>
           )}
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="editor-header-right">
           {mode === "markdown" && showToolbar && (
-            <Button
+            <button
               type="button"
-              variant="outline"
-              size="sm"
+              className="format-btn"
               onClick={() => {
                 if (!markdownPreview) {
                   syncMarkdownToEditor(markdownText);
                 }
                 setMarkdownPreview(!markdownPreview);
               }}
-              className="text-xs h-6 px-2 gap-1 cursor-pointer text-[11px]"
             >
-              {markdownPreview ? <Edit3 className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-              {markdownPreview ? "Edit" : "Preview"}
-            </Button>
+              {markdownPreview ? <Edit3 size={13} /> : <Eye size={13} />}
+              <span>{markdownPreview ? "Edit" : "Preview"}</span>
+            </button>
           )}
 
           {allowExpand && (
-            <Button
+            <button
               type="button"
-              variant="ghost"
-              size="sm"
+              className="expand-btn"
               onClick={() => setIsExpanded(!isExpanded)}
-              className={`text-xs gap-1 cursor-pointer text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 ${
-                compact ? "h-6 px-1.5 text-[11px]" : "h-7 px-2"
-              }`}
-              title={
-                isExpanded
-                  ? "Minimize editor"
-                  : "Expand editor"
-              }
+              title={isExpanded ? "Minimize editor" : "Expand editor"}
             >
               {isExpanded ? (
                 <>
-                  <Minimize2 className="h-3 w-3" />
-                  <span className="hidden sm:inline">Compact</span>
+                  <Minimize2 size={13} />
+                  <span>Compact</span>
                 </>
               ) : (
                 <>
-                  <Maximize2 className="h-3 w-3" />
-                  <span className="hidden sm:inline">Expand</span>
+                  <Maximize2 size={13} />
+                  <span>Expand</span>
                 </>
               )}
-            </Button>
+            </button>
           )}
         </div>
       </div>
 
-      {/* Lexical Visual Editor */}
-      <div className={mode === "wysiwyg" ? "block" : "hidden"}>
+      {/* Lexical Visual Editor (Completely hidden when in markdown mode) */}
+      <div style={{ display: mode === "wysiwyg" ? "block" : "none" }}>
         {showToolbar && (
           <Toolbar
             compact={compact}
@@ -691,68 +754,49 @@ function EditorWrapper({
         />
       </div>
 
-      {/* Markdown Raw Editor / Preview */}
-      {mode === "markdown" && (
-        <div className="space-y-1.5">
+      {/* Markdown Raw Editor / Preview (Completely hidden when in wysiwyg mode) */}
+      <div style={{ display: mode === "markdown" ? "block" : "none" }}>
+        <div className="editor-markdown-section">
           {!markdownPreview ? (
             <>
               {/* Quick Markdown Toolbar */}
               {showToolbar && (
-                <div
-                  className={`flex flex-wrap gap-1 items-center bg-gray-50 dark:bg-gray-800/50 ${
-                    compact ? "p-0.5 text-[11px]" : "p-1 text-xs"
-                  } rounded-md border border-gray-200 dark:border-gray-800 animate-in fade-in-50 duration-150`}
-                >
-                  <Button
+                <div className="editor-markdown-toolbar">
+                  <button
                     type="button"
-                    variant="ghost"
-                    size="sm"
                     onClick={() => insertMarkdownSnippet("## Heading Title")}
                     title="Add Heading"
-                    className={compact ? "h-6 px-1.5 text-[11px]" : "h-7 px-2"}
                   >
-                    <HeadingIcon className="h-3 w-3 mr-1" /> H2
-                  </Button>
-                  <Button
+                    <HeadingIcon size={13} /> H2
+                  </button>
+                  <button
                     type="button"
-                    variant="ghost"
-                    size="sm"
                     onClick={() => insertMarkdownSnippet("**Bold Text**")}
                     title="Add Bold"
-                    className={compact ? "h-6 px-1.5 text-[11px]" : "h-7 px-2"}
                   >
-                    <Bold className="h-3 w-3 mr-1" /> Bold
-                  </Button>
-                  <Button
+                    <Bold size={13} /> Bold
+                  </button>
+                  <button
                     type="button"
-                    variant="ghost"
-                    size="sm"
                     onClick={() => insertMarkdownSnippet("*Italic Text*")}
                     title="Add Italic"
-                    className={compact ? "h-6 px-1.5 text-[11px]" : "h-7 px-2"}
                   >
-                    <Italic className="h-3 w-3 mr-1" /> Italic
-                  </Button>
-                  <Button
+                    <Italic size={13} /> Italic
+                  </button>
+                  <button
                     type="button"
-                    variant="ghost"
-                    size="sm"
                     onClick={() => insertMarkdownSnippet("[Link Text](https://example.com)")}
                     title="Add Link"
-                    className={compact ? "h-6 px-1.5 text-[11px]" : "h-7 px-2"}
                   >
-                    <LinkIcon className="h-3 w-3 mr-1" /> Link
-                  </Button>
-                  <Button
+                    <LinkIcon size={13} /> Link
+                  </button>
+                  <button
                     type="button"
-                    variant="ghost"
-                    size="sm"
                     onClick={() => insertMarkdownSnippet("- List Item 1\n- List Item 2")}
                     title="Add Bullet List"
-                    className={compact ? "h-6 px-1.5 text-[11px]" : "h-7 px-2"}
                   >
-                    <ListIcon className="h-3 w-3 mr-1" /> List
-                  </Button>
+                    <ListIcon size={13} /> List
+                  </button>
                   <ImageDialog
                     onOk={(url) => insertMarkdownSnippet(`![Image Description](${url})`)}
                     compact={compact}
@@ -780,29 +824,27 @@ function EditorWrapper({
                   }
                 }}
                 placeholder={placeholder || "Type or paste your Markdown content here..."}
-                rows={isExpanded ? 8 : compact ? 2 : 10}
-                className={`w-full font-mono text-sm ${effectiveMinHeight} ${
-                  compact ? "p-2 text-xs" : "p-3"
-                } border border-gray-200 dark:border-gray-800 rounded-md bg-transparent focus:outline-hidden focus:ring-2 focus:ring-blue-500 transition-[min-height] duration-200`}
+                rows={isExpanded ? 12 : compact ? 4 : 8}
+                className={`editor-markdown-textarea ${effectiveMinHeight}`}
               />
             </>
           ) : (
-            <div
-              className={`border border-gray-200 dark:border-gray-800 rounded-md ${compact ? "p-2" : "p-4"} ${effectiveMinHeight} prose dark:prose-invert max-w-none transition-[min-height] duration-200`}
-            >
+            <div className={`editor-markdown-preview ${effectiveMinHeight}`}>
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {markdownText || "*No content to preview*"}
               </ReactMarkdown>
             </div>
           )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
 
 export function Editor(props: LexicalEditorProps) {
-  const { initialState } = props;
+  const { initialState, themeConfig } = props;
+  const mergedTheme = themeConfig ? { ...LexicalTheme, ...themeConfig } : LexicalTheme;
+
   return (
     <LexicalComposer
       initialConfig={{
@@ -810,7 +852,7 @@ export function Editor(props: LexicalEditorProps) {
         onError,
         editable: true,
         nodes: [ImageNode, LinkNode, HeadingNode, QuoteNode, ListNode, ListItemNode, CodeNode],
-        theme: LexicalTheme,
+        theme: mergedTheme,
         editorState:
           initialState && !isJsonString(initialState)
             ? () => {

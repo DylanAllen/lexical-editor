@@ -14,6 +14,7 @@ import remarkGfm from "remark-gfm";
 
 import LexicalTheme from "../lib/lexical-theme";
 import { isJsonString } from "../lib/utils";
+import type { EditorThemeMode } from "./Editor";
 
 function onError(error: Error) {
   console.error("LexicalRenderer error:", error);
@@ -28,6 +29,15 @@ export interface LexicalRendererProps {
    * Optional custom CSS class name for the wrapper element.
    */
   className?: string;
+  /**
+   * Theme mode: 'light' | 'dark' | 'unstyled' | 'auto' (browser preference)
+   * Defaults to 'auto'
+   */
+  theme?: EditorThemeMode;
+  /**
+   * Optional custom Lexical theme configuration to override default classes.
+   */
+  themeConfig?: Record<string, any>;
 }
 
 const URL_MATCHER =
@@ -49,72 +59,102 @@ const MATCHERS = [
   },
 ];
 
-export function LexicalRenderer({ initialState, className }: LexicalRendererProps) {
+export function LexicalRenderer({
+  initialState,
+  className,
+  theme = "auto",
+  themeConfig,
+}: LexicalRendererProps) {
   if (!initialState) return null;
+
+  const activeTheme: EditorThemeMode = theme || "auto";
+
+  const themeClassName =
+    activeTheme === "light"
+      ? "editor-theme-light"
+      : activeTheme === "dark"
+      ? "editor-theme-dark"
+      : activeTheme === "unstyled"
+      ? "editor-unstyled"
+      : "editor-theme-auto";
+
+  const wrapperClasses = [
+    "editor-renderer",
+    themeClassName,
+    className || "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   // Render Markdown if string is not Lexical JSON
   if (!isJsonString(initialState)) {
     return (
-      <div className={`prose dark:prose-invert max-w-none space-y-4 ${className || ""}`}>
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          components={{
-            img: ({ src, alt }) => (
-              <img
-                src={src || ""}
-                alt={alt || ""}
-                className="rounded-lg border border-gray-200 dark:border-gray-800 shadow-xs my-4 max-w-full h-auto"
-                loading="lazy"
-              />
-            ),
-            a: ({ href, children }) => (
-              <a
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="editor-link underline font-medium hover:opacity-85 transition-opacity"
-              >
-                {children}
-              </a>
-            ),
-          }}
-        >
-          {initialState}
-        </ReactMarkdown>
+      <div className={wrapperClasses} data-editor-theme={activeTheme}>
+        <div className="prose dark:prose-invert max-w-none space-y-4">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              img: ({ src, alt }) => (
+                <img
+                  src={src || ""}
+                  alt={alt || ""}
+                  className="rounded-lg border border-gray-200 dark:border-gray-800 shadow-xs my-4 max-w-full h-auto editor-image"
+                  loading="lazy"
+                />
+              ),
+              a: ({ href, children }) => (
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="editor-link underline font-medium hover:opacity-85 transition-opacity"
+                >
+                  {children}
+                </a>
+              ),
+            }}
+          >
+            {initialState}
+          </ReactMarkdown>
+        </div>
       </div>
     );
   }
 
+  const mergedTheme = themeConfig ? { ...LexicalTheme, ...themeConfig } : LexicalTheme;
+
   return (
-    <LexicalComposer
-      key={initialState}
-      initialConfig={{
-        namespace: "LexicalRenderer",
-        theme: LexicalTheme,
-        onError,
-        editorState: initialState,
-        editable: false,
-        nodes: [
-          ImageNode,
-          AutoLinkNode,
-          LinkNode,
-          HeadingNode,
-          QuoteNode,
-          ListNode,
-          ListItemNode,
-          CodeNode,
-        ],
-      }}
-    >
-      <div className="relative">
-        <RichTextPlugin
-          contentEditable={<ContentEditable className={`${className || ""}`} />}
-          placeholder={null}
-          ErrorBoundary={LexicalErrorBoundary}
-        />
-        <AutoLinkPlugin matchers={MATCHERS} />
-      </div>
-    </LexicalComposer>
+    <div className={wrapperClasses} data-editor-theme={activeTheme}>
+      <LexicalComposer
+        key={initialState}
+        initialConfig={{
+          namespace: "LexicalRenderer",
+          theme: mergedTheme,
+          onError,
+          editorState: initialState,
+          editable: false,
+          nodes: [
+            ImageNode,
+            AutoLinkNode,
+            LinkNode,
+            HeadingNode,
+            QuoteNode,
+            ListNode,
+            ListItemNode,
+            CodeNode,
+          ],
+        }}
+      >
+        <div className="relative">
+          <RichTextPlugin
+            contentEditable={<ContentEditable className="outline-none" />}
+            placeholder={null}
+            ErrorBoundary={LexicalErrorBoundary}
+          />
+          <AutoLinkPlugin matchers={MATCHERS} />
+        </div>
+      </LexicalComposer>
+    </div>
   );
 }
 

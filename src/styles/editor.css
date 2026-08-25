@@ -1,82 +1,406 @@
 /* ==========================================================================
    React Lexical Markdown Editor Styles
+   Theme Modes: 'light' | 'dark' | 'unstyled' | 'auto'
    ========================================================================== */
 
-:root {
+/* --------------------------------------------------------------------------
+   1. Theme Color Tokens
+   -------------------------------------------------------------------------- */
+
+/* Light Mode Defaults */
+:root,
+.editor-theme-light,
+[data-editor-theme="light"] {
   --editor-primary: #2563eb;
+  --editor-primary-hover: #1d4ed8;
   --editor-primary-foreground: #ffffff;
   --editor-background: #ffffff;
   --editor-foreground: #0f172a;
-  --editor-muted: #f1f5f9;
+  --editor-muted: #f8fafc;
+  --editor-muted-hover: #f1f5f9;
   --editor-muted-foreground: #64748b;
   --editor-border: #e2e8f0;
+  --editor-active: #e2e8f0;
   --editor-radius: 0.5rem;
 }
 
+/* Explicit Dark Mode (or inside .dark parent container) */
+.editor-theme-dark,
+[data-editor-theme="dark"],
+.dark .editor-theme-auto,
+.dark [data-editor-theme="auto"] {
+  --editor-primary: #3b82f6;
+  --editor-primary-hover: #2563eb;
+  --editor-primary-foreground: #ffffff;
+  --editor-background: #0f172a;
+  --editor-foreground: #f8fafc;
+  --editor-muted: #1e293b;
+  --editor-muted-hover: #334155;
+  --editor-muted-foreground: #94a3b8;
+  --editor-border: #334155;
+  --editor-active: #334155;
+}
+
+/* Browser Preference (prefers-color-scheme: dark when in auto mode) */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not(.editor-theme-light):not([data-editor-theme="light"]),
+  .editor-theme-auto,
+  [data-editor-theme="auto"] {
     --editor-primary: #3b82f6;
+    --editor-primary-hover: #2563eb;
     --editor-primary-foreground: #ffffff;
     --editor-background: #0f172a;
     --editor-foreground: #f8fafc;
     --editor-muted: #1e293b;
+    --editor-muted-hover: #334155;
     --editor-muted-foreground: #94a3b8;
     --editor-border: #334155;
+    --editor-active: #334155;
   }
 }
 
+/* --------------------------------------------------------------------------
+   2. Container & Base Resets
+   -------------------------------------------------------------------------- */
 .editor-container {
-  border: 1px solid var(--border, var(--editor-border));
-  border-radius: var(--radius, var(--editor-radius));
-  background-color: var(--background, var(--editor-background));
-  color: var(--foreground, var(--editor-foreground));
-  box-sizing: border-box;
-  font-family: inherit;
+  box-sizing: border-box !important;
+  font-family: inherit !important;
+  position: relative !important;
+  text-align: left !important;
 }
 
-.editor-container * {
-  box-sizing: border-box;
+.editor-container *,
+.editor-container *::before,
+.editor-container *::after {
+  box-sizing: border-box !important;
+}
+
+/* Styled Theme (Applied unless .editor-unstyled is set) */
+.editor-container:not(.editor-unstyled) {
+  border: 1px solid var(--editor-border) !important;
+  border-radius: var(--editor-radius) !important;
+  background-color: var(--editor-background) !important;
+  color: var(--editor-foreground) !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+  padding: 0.875rem !important;
+}
+
+.editor-container:not(.editor-unstyled).compact {
+  padding: 0.5rem !important;
+}
+
+.editor-container:not(.editor-unstyled):focus-within {
+  border-color: var(--editor-primary) !important;
+  box-shadow: 0 0 0 1px var(--editor-primary) !important;
+}
+
+/* --------------------------------------------------------------------------
+   3. Scoped Button Reset (Styled mode)
+   -------------------------------------------------------------------------- */
+.editor-container:not(.editor-unstyled) button {
+  all: unset !important;
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.35rem !important;
+  padding: 0 0.5rem !important;
+  height: 1.75rem !important;
+  border-radius: 0.375rem !important;
+  font-family: inherit !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+  color: var(--editor-muted-foreground) !important;
+  background-color: transparent !important;
+  border: 1px solid transparent !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  vertical-align: middle !important;
+  outline: none !important;
+  flex-shrink: 0 !important;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease !important;
+}
+
+.editor-container:not(.editor-unstyled) button:hover {
+  background-color: var(--editor-muted-hover) !important;
+  color: var(--editor-foreground) !important;
+}
+
+.editor-container:not(.editor-unstyled) button:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+.editor-container:not(.editor-unstyled) button.toolbar-item {
+  width: 1.875rem !important;
+  height: 1.875rem !important;
+  padding: 0 !important;
+  border-radius: 0.375rem !important;
+  color: var(--editor-foreground) !important;
+}
+
+.editor-container:not(.editor-unstyled) button.toolbar-item.compact {
+  width: 1.5rem !important;
+  height: 1.5rem !important;
+}
+
+.editor-container:not(.editor-unstyled) button.toolbar-item:hover {
+  background-color: var(--editor-muted-hover) !important;
+  color: var(--editor-foreground) !important;
+}
+
+.editor-container:not(.editor-unstyled) button.toolbar-item.active {
+  background-color: var(--editor-active) !important;
+  color: var(--editor-foreground) !important;
+  font-weight: 600 !important;
+}
+
+.editor-container:not(.editor-unstyled) button.format-btn {
+  background-color: var(--editor-muted) !important;
+  border: 1px solid var(--editor-border) !important;
+  color: var(--editor-foreground) !important;
+  font-weight: 500 !important;
+  padding: 0 0.5rem !important;
+}
+
+.editor-container:not(.editor-unstyled) button.format-btn:hover {
+  background-color: var(--editor-muted-hover) !important;
+}
+
+.editor-container:not(.editor-unstyled) button.expand-btn {
+  color: var(--editor-muted-foreground) !important;
+  padding: 0 0.5rem !important;
+}
+
+.editor-container:not(.editor-unstyled) button.expand-btn:hover {
+  background-color: var(--editor-muted-hover) !important;
+  color: var(--editor-foreground) !important;
+}
+
+/* --------------------------------------------------------------------------
+   4. Header Bar & Mode Switcher
+   -------------------------------------------------------------------------- */
+.editor-header-bar {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding-bottom: 0.625rem !important;
+  margin-bottom: 0.625rem !important;
+  gap: 0.5rem !important;
+  width: 100% !important;
+}
+
+.editor-container:not(.editor-unstyled) .editor-header-bar {
+  border-bottom: 1px solid var(--editor-border) !important;
+}
+
+.editor-header-left {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 0.375rem !important;
+}
+
+.editor-header-right {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 0.375rem !important;
+}
+
+.editor-mode-pill {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 2px !important;
+}
+
+.editor-container:not(.editor-unstyled) .editor-mode-pill {
+  background-color: var(--editor-muted) !important;
+  border: 1px solid var(--editor-border) !important;
+  padding: 2px !important;
+  border-radius: 0.375rem !important;
+}
+
+.editor-container:not(.editor-unstyled) .editor-mode-pill button {
+  height: 1.375rem !important;
+  padding: 0 0.5rem !important;
+  font-size: 0.7rem !important;
+  border-radius: 0.25rem !important;
+  color: var(--editor-muted-foreground) !important;
+  background: transparent !important;
+  border: none !important;
+  font-weight: 500 !important;
+}
+
+.editor-container:not(.editor-unstyled) .editor-mode-pill button.active {
+  background-color: var(--editor-background) !important;
+  color: var(--editor-foreground) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08) !important;
+  font-weight: 600 !important;
+}
+
+/* --------------------------------------------------------------------------
+   5. Toolbar Bar
+   -------------------------------------------------------------------------- */
+.editor-toolbar {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 0.25rem !important;
+  padding-bottom: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+  width: 100% !important;
+}
+
+.editor-container:not(.editor-unstyled) .editor-toolbar {
+  border-bottom: 1px solid var(--editor-border) !important;
+}
+
+.editor-divider {
+  width: 1px !important;
+  height: 1.25rem !important;
+  margin: 0 0.25rem !important;
+  flex-shrink: 0 !important;
+}
+
+.editor-container:not(.editor-unstyled) .editor-divider {
+  background-color: var(--editor-border) !important;
+}
+
+/* --------------------------------------------------------------------------
+   6. Input & Content Editable
+   -------------------------------------------------------------------------- */
+.editor-body-wrapper {
+  position: relative !important;
+  width: 100% !important;
 }
 
 .editor-input {
-  outline: none;
-  min-height: 150px;
-  background-color: var(--background, var(--editor-background));
-  color: var(--foreground, var(--editor-foreground));
+  outline: none !important;
+  min-height: 250px;
+  line-height: 1.65 !important;
   word-break: break-word;
   white-space: pre-wrap;
-  line-height: 1.6;
 }
 
-.editor-input a {
+.editor-container:not(.editor-unstyled) .editor-input {
+  border: 1px solid var(--editor-border) !important;
+  border-radius: 0.375rem !important;
+  padding: 0.75rem 1rem !important;
+  background-color: var(--editor-background) !important;
+  color: var(--editor-foreground) !important;
+  font-size: 0.9375rem !important;
+  box-shadow: none !important;
+  transition: min-height 0.2s ease !important;
+}
+
+.editor-container:not(.editor-unstyled) .editor-input:focus {
+  border-color: var(--editor-primary) !important;
+}
+
+.editor-container:not(.editor-unstyled) .editor-input.compact {
+  padding: 0.5rem 0.75rem !important;
+  font-size: 0.875rem !important;
+  min-height: 44px;
+}
+
+.editor-container:not(.editor-unstyled) .editor-input a {
   text-decoration: underline;
   text-underline-offset: 2px;
   font-weight: 500;
-  color: var(--primary, var(--editor-primary));
+  color: var(--editor-primary);
 }
 
 .editor-placeholder {
-  color: var(--muted-foreground, var(--editor-muted-foreground));
   position: absolute;
+  top: 0.75rem;
+  left: 1rem;
+  font-size: 0.9375rem;
+  line-height: 1.65;
   pointer-events: none;
   user-select: none;
 }
 
-.editor-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.25rem;
-  border-bottom: 1px solid var(--border, var(--editor-border));
+.editor-container:not(.editor-unstyled) .editor-placeholder {
+  color: var(--editor-muted-foreground);
 }
 
-.toolbar-item.active {
-  background-color: var(--accent, rgba(125, 125, 125, 0.18));
-  color: var(--foreground, var(--editor-foreground));
+.editor-placeholder.compact {
+  top: 0.5rem;
+  left: 0.75rem;
+  font-size: 0.875rem;
 }
 
 /* --------------------------------------------------------------------------
-   Theme Text Formatting
+   7. Markdown Raw Editor & Quick Toolbar
+   -------------------------------------------------------------------------- */
+.editor-markdown-section {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.5rem !important;
+  width: 100% !important;
+}
+
+.editor-markdown-toolbar {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  gap: 0.25rem !important;
+  align-items: center !important;
+}
+
+.editor-container:not(.editor-unstyled) .editor-markdown-toolbar {
+  background-color: var(--editor-muted) !important;
+  padding: 0.25rem 0.5rem !important;
+  border-radius: 0.375rem !important;
+  border: 1px solid var(--editor-border) !important;
+}
+
+.editor-markdown-textarea {
+  width: 100% !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-size: 0.875rem !important;
+  line-height: 1.5 !important;
+  outline: none !important;
+  resize: vertical !important;
+  box-sizing: border-box !important;
+}
+
+.editor-container:not(.editor-unstyled) .editor-markdown-textarea {
+  padding: 0.75rem 0.875rem !important;
+  border: 1px solid var(--editor-border) !important;
+  border-radius: 0.375rem !important;
+  background-color: var(--editor-background) !important;
+  color: var(--editor-foreground) !important;
+  transition: border-color 0.15s ease, min-height 0.2s ease !important;
+}
+
+.editor-container:not(.editor-unstyled) .editor-markdown-textarea:focus {
+  border-color: var(--editor-primary) !important;
+  box-shadow: 0 0 0 1px var(--editor-primary) !important;
+}
+
+.editor-markdown-preview {
+  box-sizing: border-box !important;
+}
+
+.editor-container:not(.editor-unstyled) .editor-markdown-preview {
+  border: 1px solid var(--editor-border) !important;
+  border-radius: 0.375rem !important;
+  padding: 1rem !important;
+  background-color: var(--editor-muted) !important;
+  color: var(--editor-foreground) !important;
+}
+
+/* --------------------------------------------------------------------------
+   8. Lexical Theme Typography & Formatting
    -------------------------------------------------------------------------- */
 .editor-text-bold {
   font-weight: 700;
@@ -100,7 +424,7 @@
 }
 
 .editor-text-code {
-  background-color: var(--muted, rgba(125, 125, 125, 0.15));
+  background-color: var(--editor-muted-hover);
   padding: 0.15rem 0.35rem;
   border-radius: 0.25rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -108,7 +432,7 @@
 }
 
 .editor-link {
-  color: var(--primary, var(--editor-primary));
+  color: var(--editor-primary);
   text-decoration: underline;
   text-underline-offset: 2px;
   cursor: pointer;
@@ -119,9 +443,6 @@
   opacity: 0.85;
 }
 
-/* --------------------------------------------------------------------------
-   Theme Block Formatting
-   -------------------------------------------------------------------------- */
 .editor-paragraph {
   margin: 0;
   margin-bottom: 0.5rem;
@@ -133,21 +454,21 @@
 }
 
 .editor-heading-h1 {
-  font-size: 1.5rem;
+  font-size: 1.625rem;
   font-weight: 700;
   line-height: 1.25;
-  margin: 0 0 0.5rem 0;
+  margin: 0.75rem 0 0.5rem 0;
 }
 
 .editor-heading-h2 {
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   font-weight: 600;
   line-height: 1.3;
-  margin: 0.75rem 0 0.35rem 0;
+  margin: 0.625rem 0 0.35rem 0;
 }
 
 .editor-heading-h3 {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 600;
   line-height: 1.35;
   margin: 0.5rem 0 0.25rem 0;
@@ -182,7 +503,7 @@
 }
 
 .editor-code {
-  background-color: var(--muted, rgba(125, 125, 125, 0.1));
+  background-color: var(--editor-muted-hover);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   display: block;
   padding: 0.75rem 1rem;
@@ -198,4 +519,89 @@
   height: auto;
   border-radius: 0.375rem;
   display: inline-block;
+}
+
+/* --------------------------------------------------------------------------
+   9. Built-in Dialog Styling
+   -------------------------------------------------------------------------- */
+.editor-dialog-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9999 !important;
+  background-color: rgba(0, 0, 0, 0.55) !important;
+  backdrop-filter: blur(2px) !important;
+}
+
+.editor-dialog-content {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 10000 !important;
+  width: calc(100% - 2rem) !important;
+  max-width: 28rem !important;
+  background-color: var(--editor-background, #ffffff) !important;
+  color: var(--editor-foreground, #0f172a) !important;
+  border: 1px solid var(--editor-border, #e2e8f0) !important;
+  border-radius: 0.625rem !important;
+  padding: 1.5rem !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15) !important;
+  box-sizing: border-box !important;
+}
+
+.editor-dialog-content h2,
+.editor-dialog-content .dialog-title {
+  margin: 0 0 1rem 0 !important;
+  font-size: 1.125rem !important;
+  font-weight: 600 !important;
+  color: var(--editor-foreground, #0f172a) !important;
+}
+
+.editor-dialog-content label {
+  display: block !important;
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  color: var(--editor-muted-foreground, #334155) !important;
+  margin-bottom: 0.375rem !important;
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+.editor-dialog-content input {
+  width: 100% !important;
+  padding: 0.5rem 0.75rem !important;
+  font-size: 0.875rem !important;
+  border: 1px solid var(--editor-border, #cbd5e1) !important;
+  border-radius: 0.375rem !important;
+  background-color: var(--editor-background, #ffffff) !important;
+  color: var(--editor-foreground, #0f172a) !important;
+  outline: none !important;
+  box-sizing: border-box !important;
+  margin-bottom: 1rem !important;
+}
+
+.editor-dialog-content input:focus {
+  border-color: var(--editor-primary, #2563eb) !important;
+  box-shadow: 0 0 0 1px var(--editor-primary, #2563eb) !important;
+}
+
+.editor-dialog-footer {
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 0.5rem !important;
+  margin-top: 1rem !important;
+}
+
+.editor-dialog-btn-primary {
+  background-color: var(--editor-primary, #2563eb) !important;
+  color: var(--editor-primary-foreground, #ffffff) !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 0.375rem !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+  height: 2.125rem !important;
+}
+
+.editor-dialog-btn-primary:hover {
+  background-color: var(--editor-primary-hover, #1d4ed8) !important;
 }
